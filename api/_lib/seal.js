@@ -28,8 +28,21 @@ function newKeyHex() {
 }
 
 // Envelope: v1.<iv hex>.<auth tag hex>.<ciphertext base64>
+//
+// The nonce is derived from the plaintext under the key (a synthetic IV)
+// rather than drawn at random, so re-sealing unchanged content reproduces
+// byte-identical output. That keeps `git diff` after `npm run seal` showing
+// only the adventure actually edited instead of all ten. Distinct content
+// still gets a distinct nonce, which is the property GCM needs.
+function ivFor(plaintext, key) {
+  return crypto.createHmac('sha256', key)
+    .update(String(plaintext), 'utf8')
+    .digest()
+    .subarray(0, IV_BYTES);
+}
+
 function encrypt(plaintext, key) {
-  const iv = crypto.randomBytes(IV_BYTES);
+  const iv = ivFor(plaintext, key);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const body = Buffer.concat([cipher.update(String(plaintext), 'utf8'), cipher.final()]);
   return [

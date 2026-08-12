@@ -8,15 +8,16 @@
 // this repository you can always get the content back.
 const fs = require('fs');
 const path = require('path');
-const { keyFromEnv, decrypt } = require('../api/_lib/seal.js');
+const { decrypt } = require('../api/_lib/seal.js');
+const { loadKey } = require('./_key.js');
 
 const ROOT = path.join(__dirname, '..');
 const SOURCE_DIR = path.join(ROOT, 'content', 'source');
 const SEALED_DIR = path.join(ROOT, 'content', 'sealed');
 
-const key = keyFromEnv();
+const key = loadKey();
 if (!key) {
-  console.error('ADVENTURE_KEY is not set — export it before unsealing.');
+  console.error('ADVENTURE_KEY not found in the environment or .env.local.');
   process.exit(1);
 }
 
