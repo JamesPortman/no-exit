@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 760" font-family="Georgia, serif">
+  <rect width="700" height="760" fill="#181a20"/>
+  <text x="350" y="40" text-anchor="middle" fill="#e0a83c" font-size="22" letter-spacing="3">MERROW'S LAST CHART</text>
+  <text x="350" y="64" text-anchor="middle" fill="#9aa3b2" font-size="13" font-style="italic">north is up · one square per bearing</text>
+
+  <!-- grid -->
+  <g stroke="#4a5261" stroke-width="1.5">
+    <rect x="60" y="90" width="580" height="580" fill="#1c212b"/>
+    <path d="M205 90 V670 M350 90 V670 M495 90 V670"/>
+    <path d="M60 235 H640 M60 380 H640 M60 525 H640"/>
+  </g>
+  <!-- column / row labels -->
+  <g fill="#9aa3b2" font-size="14">
+    <text x="132" y="700" text-anchor="middle">A</text>
+    <text x="277" y="700" text-anchor="middle">B</text>
+    <text x="422" y="700" text-anchor="middle">C</text>
+    <text x="567" y="700" text-anchor="middle">D</text>
+    <text x="44" y="168" text-anchor="middle">1</text>
+    <text x="44" y="313" text-anchor="middle">2</text>
+    <text x="44" y="458" text-anchor="middle">3</text>
+    <text x="44" y="603" text-anchor="middle">4</text>
+  </g>
+
+  <!-- islands: silver blobs + names -->
+  <g fill="#39414f">
+    <path d="M110 140 q30 -18 52 2 q18 16 -6 30 q-34 16 -50 -4 q-10 -16 4 -28 Z"/>
+    <path d="M252 150 q26 -12 44 4 q12 18 -10 26 q-30 10 -40 -6 q-6 -14 6 -24 Z"/>
+    <path d="M398 145 q28 -14 48 2 q14 16 -8 28 q-32 12 -44 -6 q-8 -14 4 -24 Z"/>
+    <path d="M544 150 q24 -14 42 2 q14 14 -6 26 q-28 12 -40 -4 q-8 -14 4 -24 Z"/>
+    <path d="M108 288 q28 -16 50 0 q16 16 -8 28 q-32 14 -46 -4 q-8 -14 4 -24 Z"/>
+    <path d="M250 292 q30 -16 50 2 q14 16 -10 26 q-32 12 -44 -6 q-6 -12 4 -22 Z"/>
+    <path d="M396 290 q28 -14 48 2 q14 14 -8 26 q-30 12 -44 -6 q-6 -12 4 -22 Z"/>
+    <path d="M542 290 q26 -14 44 2 q12 16 -8 26 q-28 10 -40 -6 q-6 -12 4 -22 Z"/>
+    <path d="M110 435 q28 -16 48 0 q16 16 -8 28 q-30 12 -44 -6 q-8 -12 4 -22 Z"/>
+    <path d="M252 435 q26 -14 46 2 q12 16 -8 26 q-30 10 -42 -6 q-6 -12 4 -22 Z"/>
+    <path d="M398 435 q28 -14 46 2 q14 14 -8 26 q-30 10 -42 -6 q-6 -12 4 -22 Z"/>
+    <path d="M544 435 q24 -12 42 2 q12 14 -8 24 q-26 10 -38 -4 q-6 -12 4 -22 Z"/>
+    <path d="M110 580 q28 -16 48 0 q16 16 -8 28 q-30 12 -44 -6 q-8 -12 4 -22 Z"/>
+    <path d="M252 580 q26 -14 46 2 q12 16 -8 26 q-30 10 -42 -6 q-6 -12 4 -22 Z"/>
+    <path d="M544 580 q24 -12 42 2 q12 14 -8 24 q-26 10 -38 -4 q-6 -12 4 -22 Z"/>
+  </g>
+  <g fill="#c8ccd6" font-size="15" text-anchor="middle">
+    <text x="132" y="205">Thornrock</text>
+    <text x="277" y="205">Gullhaven</text>
+    <text x="422" y="205">Mistfen</text>
+    <text x="567" y="205">Kelpgate</text>
+    <text x="132" y="350">Palebay</text>
+    <text x="277" y="350">Saltmarsh</text>
+    <text x="422" y="350">Foghollow</text>
+    <text x="567" y="350">Wreckpoint</text>
+    <text x="132" y="495">Cinderkey</text>
+    <text x="277" y="495">Lowlight</text>
+    <text x="422" y="495">Brinemoor</text>
+    <text x="567" y="495">Selkieshoal</text>
+    <text x="132" y="640">Duskharbor</text>
+    <text x="277" y="640">Tidewrack</text>
+    <text x="567" y="640">Emberledge</text>
+  </g>
+
+  <!-- compass rose at C4: the start -->
+  <g transform="translate(422 590)">
+    <circle r="34" fill="none" stroke="#e0a83c" stroke-width="2"/>
+    <path d="M0 -30 L7 0 L0 30 L-7 0 Z" fill="#e0a83c"/>
+    <path d="M-30 0 L0 -7 L30 0 L0 7 Z" fill="#8a6a28"/>
+    <circle r="5" fill="#181a20" stroke="#e0a83c" stroke-width="2"/>
+    <text y="52" text-anchor="middle" fill="#e0a83c" font-size="13" letter-spacing="2">START</text>
+    <text y="-40" text-anchor="middle" fill="#e0a83c" font-size="13">N</text>
+  </g>
+</svg>

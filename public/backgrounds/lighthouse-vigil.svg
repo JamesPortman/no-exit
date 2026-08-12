@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="lhbeam" x1="1" y1="0" x2="0" y2="0.18">
+      <stop offset="0%" stop-color="#ffe9b0" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffe9b0" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sea1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a7a8f" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#1e4657" stop-opacity="0.45"/>
+    </linearGradient>
+    <linearGradient id="sea2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a94ab" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#2a5a6e" stop-opacity="0.35"/>
+    </linearGradient>
+    <radialGradient id="moonglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8ecf4" stop-opacity="0.4"/>
+      <stop offset="45%" stop-color="#e8ecf4" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#e8ecf4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- moon -->
+  <circle cx="230" cy="150" r="120" fill="url(#moonglow)"/>
+  <circle cx="230" cy="150" r="42" fill="#e8ecf4" fill-opacity="0.45"/>
+  <circle cx="214" cy="138" r="9" fill="#9aa8bc" fill-opacity="0.3"/>
+  <circle cx="246" cy="164" r="6" fill="#9aa8bc" fill-opacity="0.3"/>
+
+  <!-- lighthouse on the headland -->
+  <g>
+    <path d="M850 560 q90 -50 200 -20 q90 -20 150 20 L1200 800 L800 800 Z" fill="#2e3a45" fill-opacity="0.4"/>
+    <!-- tower with bands -->
+    <path d="M955 545 L975 260 L1045 260 L1065 545 Z" fill="#d8dde6" fill-opacity="0.35"/>
+    <path d="M971 320 L1049 320 L1053 380 L967 380 Z M962 440 L1058 440 L1062 500 L958 500 Z" fill="#a03a3a" fill-opacity="0.4"/>
+    <!-- lamp room -->
+    <rect x="967" y="212" width="86" height="48" rx="4" fill="#3a4552" fill-opacity="0.5"/>
+    <circle cx="1010" cy="236" r="15" fill="#ffe9b0" fill-opacity="0.75"/>
+    <path d="M962 212 L1010 172 L1058 212 Z" fill="#3a4552" fill-opacity="0.5"/>
+    <path d="M948 545 h124" stroke="#3a4552" stroke-opacity="0.5" stroke-width="6"/>
+    <!-- gallery rail -->
+    <path d="M960 260 h100 M965 246 v14 M985 246 v14 M1010 246 v14 M1035 246 v14 M1055 246 v14" stroke="#3a4552" stroke-opacity="0.5" stroke-width="3" fill="none"/>
+  </g>
+
+  <!-- the beam -->
+  <path d="M995 236 L80 60 L80 330 Z" fill="url(#lhbeam)"/>
+
+  <!-- sea: layered swells -->
+  <path d="M0 640 q80 -30 160 0 t160 0 t160 0 t160 0 t160 0 t160 0 t160 0 t160 0 V800 H0 Z" fill="url(#sea1)"/>
+  <path d="M0 700 q100 -24 200 0 t200 0 t200 0 t200 0 t200 0 t200 0 V800 H0 Z" fill="url(#sea2)"/>
+  <path d="M120 668 q30 -10 60 0 M420 652 q30 -10 60 0 M760 664 q30 -10 60 0" stroke="#cfe4ec" stroke-opacity="0.35" stroke-width="3" fill="none"/>
+
+  <!-- the night ferry, windows lit -->
+  <g transform="translate(300 585)">
+    <path d="M-90 34 L96 34 L66 66 L-64 66 Z" fill="#2e3a45" fill-opacity="0.55"/>
+    <rect x="-52" y="4" width="104" height="30" rx="4" fill="#3a4552" fill-opacity="0.55"/>
+    <g fill="#ffe9b0" fill-opacity="0.6">
+      <rect x="-42" y="12" width="10" height="8" rx="1"/>
+      <rect x="-22" y="12" width="10" height="8" rx="1"/>
+      <rect x="-2" y="12" width="10" height="8" rx="1"/>
+      <rect x="18" y="12" width="10" height="8" rx="1"/>
+      <rect x="38" y="12" width="10" height="8" rx="1"/>
+    </g>
+    <path d="M-10 4 v-26 M-10 -22 h24" stroke="#3a4552" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+    <path d="M14 -22 q14 6 0 14" stroke="#8a93a5" stroke-opacity="0.35" stroke-width="3" fill="none"/>
+  </g>
+
+  <!-- gulls -->
+  <path d="M520 180 q14 -14 28 0 q14 -14 28 0 M640 240 q10 -10 20 0 q10 -10 20 0" stroke="#8a93a5" stroke-opacity="0.4" stroke-width="3" fill="none"/>
+</svg>

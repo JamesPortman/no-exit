@@ -1,0 +1,104 @@
+// KV abstraction over Upstash Redis. When Redis env vars are absent outside
+// production (e.g. `vercel dev` before the integration is provisioned), falls
+// back to a file-based store in the OS temp dir so the game is testable locally.
+// Copied from Terra Incognita (api/_lib/store.js).
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+function redisStore() {
+  // The SDK JSON-serializes on write and deserializes on read — store plain
+  // objects and never stringify ourselves, or values end up double-encoded.
+  const { Redis } = require('@upstash/redis');
+  const redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
+  return {
+    async getJSON(key) {
+      const v = await redis.get(key);
+      return v == null ? null : v;
+    },
+    async setJSON(key, val, ttlSec) {
+      await redis.set(key, val, ttlSec ? { ex: ttlSec } : undefined);
+    },
+    async hsetJSON(key, field, val, ttlSec) {
+      await redis.hset(key, { [field]: val });
+      if (ttlSec) await redis.expire(key, ttlSec);
+    },
+    // returns false (and writes nothing) if the field already exists
+    async hsetnxJSON(key, field, val, ttlSec) {
+      const set = await redis.hsetnx(key, field, val);
+      if (ttlSec) await redis.expire(key, ttlSec);
+      return set === 1;
+    },
+    async hgetallJSON(key) {
+      return (await redis.hgetall(key)) || {};
+    },
+    async hdelJSON(key, field) { await redis.hdel(key, field); },
+    async incr(key, ttlSec) {
+      const n = await redis.incr(key);
+      if (n === 1 && ttlSec) await redis.expire(key, ttlSec);
+      return n;
+    },
+    async del(...keys) { await redis.del(...keys); },
+  };
+}
+
+function fileStore() {
+  const fs = require('fs');
+  const path = require('path');
+  const os = require('os');
+  const dir = path.join(os.tmpdir(), 'escape-dev-store');
+  fs.mkdirSync(dir, { recursive: true });
+  const fileFor = (key) => path.join(dir, encodeURIComponent(key) + '.json');
+  const read = (key) => {
+    try { return JSON.parse(fs.readFileSync(fileFor(key), 'utf8')); } catch { return null; }
+  };
+  const write = (key, val) => fs.writeFileSync(fileFor(key), JSON.stringify(val));
+  return {
+    async getJSON(key) { return read(key); },
+    async setJSON(key, val) { write(key, val); },
+    async hsetJSON(key, field, val) {
+      const o = read(key) || {};
+      o[field] = val;
+      write(key, o);
+    },
+    async hsetnxJSON(key, field, val) {
+      const o = read(key) || {};
+      if (Object.prototype.hasOwnProperty.call(o, field)) return false;
+      o[field] = val;
+      write(key, o);
+      return true;
+    },
+    async hgetallJSON(key) { return read(key) || {}; },
+    async hdelJSON(key, field) {
+      const o = read(key) || {};
+      delete o[field];
+      write(key, o);
+    },
+    async incr(key, ttlSec) {
+      const now = Date.now();
+      let o = read(key);
+      if (!o || (o.exp && o.exp < now)) o = { n: 0, exp: ttlSec ? now + ttlSec * 1000 : null };
+      o.n += 1;
+      write(key, o);
+      return o.n;
+    },
+    async del(...keys) {
+      const fs2 = require('fs');
+      for (const k of keys) { try { fs2.unlinkSync(fileFor(k)); } catch {} }
+    },
+  };
+}
+
+let store;
+if (REDIS_URL && REDIS_TOKEN) {
+  store = redisStore();
+} else if (process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview') {
+  store = null; // fail loudly at call sites via getStore()
+} else {
+  console.warn('[store] Redis env vars missing — using file-based dev store');
+  store = fileStore();
+}
+
+module.exports.getStore = function getStore() {
+  if (!store) throw new Error('Redis is not provisioned (missing UPSTASH/KV env vars)');
+  return store;
+};

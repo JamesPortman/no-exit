@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0a83c" stop-opacity="0.28"/>
+      <stop offset="60%" stop-color="#e0a83c" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#e0a83c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="keymetal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8c883" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#9a7328" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- warm glow behind the escutcheon -->
+  <circle cx="880" cy="360" r="330" fill="url(#glow)"/>
+
+  <!-- ornate escutcheon plate -->
+  <g transform="translate(880 360)" stroke="#b98f3e" stroke-opacity="0.5" fill="none" stroke-width="3">
+    <path d="M0 -190 C90 -190 130 -120 130 -40 C130 40 90 90 60 130 C40 155 40 190 0 190
+             C-40 190 -40 155 -60 130 C-90 90 -130 40 -130 -40 C-130 -120 -90 -190 0 -190 Z"/>
+    <path d="M0 -160 C70 -160 100 -105 100 -40 C100 25 70 70 45 105 C30 128 28 160 0 160
+             C-28 160 -30 128 -45 105 C-70 70 -100 25 -100 -40 C-100 -105 -70 -160 0 -160 Z"
+          stroke-opacity="0.3"/>
+    <!-- keyhole -->
+    <circle cx="0" cy="-30" r="42" fill="url(#keymetal)" stroke="none"/>
+    <path d="M-20 0 L-34 95 L34 95 L20 0 Z" fill="url(#keymetal)" stroke="none"/>
+  </g>
+
+  <!-- keys drifting with ribbons -->
+  <g stroke="#b98f3e" stroke-opacity="0.42" fill="none" stroke-width="3">
+    <g transform="translate(240 210) rotate(-28)">
+      <circle cx="0" cy="0" r="34"/>
+      <circle cx="0" cy="0" r="20" stroke-opacity="0.25"/>
+      <path d="M30 16 L128 74 M100 58 L86 82 M122 70 L108 94"/>
+      <path d="M-24 -24 q-40 -30 -18 -70 q30 20 18 70" stroke-opacity="0.22"/>
+    </g>
+    <g transform="translate(330 640) rotate(14)">
+      <circle cx="0" cy="0" r="24"/>
+      <path d="M21 11 L92 52 M72 40 L62 58 M88 50 L78 68"/>
+    </g>
+  </g>
+
+  <!-- dust motes -->
+  <g fill="#e0a83c">
+    <circle cx="640" cy="180" r="3" fill-opacity="0.25"/>
+    <circle cx="560" cy="520" r="2" fill-opacity="0.2"/>
+    <circle cx="1080" cy="620" r="2.5" fill-opacity="0.22"/>
+    <circle cx="150" cy="430" r="2" fill-opacity="0.18"/>
+    <circle cx="760" cy="640" r="2" fill-opacity="0.2"/>
+    <circle cx="1040" cy="140" r="2" fill-opacity="0.2"/>
+  </g>
+</svg>

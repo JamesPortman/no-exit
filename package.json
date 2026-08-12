@@ -1,0 +1,20 @@
+{
+  "name": "escape-room",
+  "private": true,
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "@upstash/redis": "^1.35.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "vercel": "^56.4.1",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "dev": "node dev-server.js",
+    "test": "NODE_ENV=test vitest run",
+    "test:e2e": "playwright test",
+    "seal": "node scripts/seal.js",
+    "unseal": "node scripts/unseal.js"
+  }
+}

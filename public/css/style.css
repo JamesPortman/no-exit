@@ -1,0 +1,243 @@
+:root {
+  --bg: #12141a;
+  --panel: #1c2028;
+  --panel-2: #242a35;
+  --text: #e8e6e1;
+  --muted: #9aa3b2;
+  --accent: #e0a83c;
+  --accent-dim: #8a6a28;
+  --good: #4caf6e;
+  --bad: #d9534f;
+  --border: #333a47;
+  --bg-art-opacity: 0.55;
+}
+:root[data-theme="day"] {
+  --bg: #f2efe9;
+  --panel: #fbfaf7;
+  --panel-2: #e9e5db;
+  --text: #26292f;
+  --muted: #67707e;
+  --accent: #9a6c10;
+  --accent-dim: #d8bd7d;
+  --good: #2e7d4f;
+  --bad: #b73a33;
+  --border: #d4cec1;
+  --bg-art-opacity: 0.75;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+/* Per-adventure background art: fixed line-art layer behind everything.
+   The SVGs use a mid-tone stroke with baked-in opacity so the same file
+   works over the night and day palettes. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  opacity: var(--bg-art-opacity);
+  pointer-events: none;
+}
+body[data-bg="default"]::before { background-image: url("/backgrounds/default.svg"); }
+body[data-bg="midnight-heist"]::before { background-image: url("/backgrounds/midnight-heist.svg"); }
+body[data-bg="lighthouse-vigil"]::before { background-image: url("/backgrounds/lighthouse-vigil.svg"); }
+body[data-bg="last-carriage"]::before { background-image: url("/backgrounds/last-carriage.svg"); }
+body[data-bg="silent-observatory"]::before { background-image: url("/backgrounds/silent-observatory.svg"); }
+body[data-bg="curio-shop"]::before { background-image: url("/backgrounds/curio-shop.svg"); }
+body[data-bg="alchemists-cellar"]::before { background-image: url("/backgrounds/alchemists-cellar.svg"); }
+body[data-bg="signal-deep"]::before { background-image: url("/backgrounds/signal-deep.svg"); }
+body[data-bg="clockmakers-attic"]::before { background-image: url("/backgrounds/clockmakers-attic.svg"); }
+body[data-bg="the-last-reel"]::before { background-image: url("/backgrounds/the-last-reel.svg"); }
+body[data-bg="cartographers-study"]::before { background-image: url("/backgrounds/cartographers-study.svg"); }
+
+/* Language + theme controls, top-right of every page */
+.chrome-bar {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 20;
+}
+.chrome-bar select {
+  width: auto;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+.chrome-bar button {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 1rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+
+/* Create form: quick-setup presets */
+#preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
+#preset-row button { margin-top: 4px; }
+#preset-row button.active {
+  background: var(--accent);
+  color: #1a1508;
+  border-color: var(--accent);
+}
+
+/* Host: tiny per-player remove button */
+.kick-btn {
+  margin: 0 0 0 4px;
+  padding: 0 5px;
+  font-size: 0.7rem;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  vertical-align: middle;
+}
+.kick-btn:hover { color: var(--bad); border-color: var(--bad); filter: none; }
+
+/* Time-warning banner (client-side, localized) */
+.banner.warning { background: var(--bad); color: #fff; }
+
+/* Confetti overlay */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+.wrap.wide { max-width: 1100px; }
+h1, h2, h3 { font-weight: 600; margin: 0 0 12px; }
+h1 { font-size: 1.5rem; letter-spacing: 0.02em; }
+h1 .accent { color: var(--accent); }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+label { display: block; margin: 12px 0 4px; color: var(--muted); font-size: 0.9rem; }
+input[type=text], input[type=number], select, textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+input[type=text]:focus, input[type=number]:focus, select:focus { outline: 2px solid var(--accent-dim); }
+button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #1a1508;
+  cursor: pointer;
+  margin-top: 12px;
+}
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: 0.5; cursor: default; }
+button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+button.danger { background: var(--bad); color: #fff; }
+button.small-btn { padding: 6px 12px; font-size: 0.85rem; margin: 4px 4px 0 0; }
+.error { color: var(--bad); margin-top: 8px; min-height: 1.2em; }
+.hidden { display: none !important; }
+
+/* Timer */
+.timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.timer.low { color: var(--bad); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 8px 0;
+  z-index: 5;
+}
+.topbar .timer { font-size: 1.6rem; }
+.penalty { color: var(--bad); font-size: 0.85rem; text-align: center; }
+
+/* Progress dots */
+.dots { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+.dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--panel-2); border: 1px solid var(--border);
+}
+.dot.done { background: var(--good); border-color: var(--good); }
+.dot.current { border-color: var(--accent); background: var(--accent-dim); }
+
+/* Puzzle */
+.puzzle-prompt { font-size: 1.05rem; line-height: 1.55; }
+.puzzle-prompt img, .puzzle-media img { max-width: 100%; border-radius: 8px; }
+.answer-row { display: flex; gap: 8px; }
+.answer-row input { flex: 1; }
+.answer-row button { margin-top: 0; white-space: nowrap; }
+.feedback { min-height: 1.4em; margin-top: 8px; font-weight: 600; }
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--bad); }
+.hint-box { background: var(--panel-2); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 6px; margin-top: 8px; }
+.solved-item { border-left: 3px solid var(--good); padding: 8px 12px; margin-top: 8px; background: var(--panel-2); border-radius: 6px; }
+.solved-item .msg { color: var(--accent); }
+
+/* Broadcast banner */
+.banner {
+  background: var(--accent);
+  color: #1a1508;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* Roster / teams */
+.team-list { display: flex; flex-wrap: wrap; gap: 12px; }
+.team-chip { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; min-width: 140px; }
+.team-chip .members { color: var(--muted); font-size: 0.85rem; }
+
+/* Ranking */
+.rank-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 8px; margin-top: 8px;
+  background: var(--panel-2); border: 1px solid var(--border);
+}
+.rank-row.first { border-color: var(--accent); background: #2a2416; }
+.rank-pos { font-size: 1.4rem; font-weight: 700; width: 2rem; text-align: center; }
+.rank-detail { color: var(--muted); font-size: 0.85rem; }
+
+/* Host console */
+.host-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.host-team .stat { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.9rem; }
+.host-team .stat span:first-child { color: var(--muted); }
+.log { max-height: 320px; overflow-y: auto; font-size: 0.85rem; }
+.log-entry { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.log-entry .t { color: var(--muted); margin-right: 8px; font-variant-numeric: tabular-nums; }
+.log-entry.wrong { color: var(--bad); }
+.log-entry.solve { color: var(--good); }
+.code-display {
+  font-size: 2rem; font-weight: 700; letter-spacing: 0.35em;
+  text-align: center; color: var(--accent); padding: 8px;
+}

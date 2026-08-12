@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="projbeam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#efe6cf" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#efe6cf" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="reelmetal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7a8494" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#3a4552" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="bulbglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a2f3c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4e1c24" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- the projector, left, throwing its beam across the whole scene -->
+  <g transform="translate(180 430)">
+    <path d="M60 -40 L1200 -230 L1200 90 L60 40 Z" fill="url(#projbeam)"/>
+    <rect x="-90" y="-60" width="150" height="120" rx="14" fill="url(#reelmetal)"/>
+    <circle cx="-15" cy="-95" r="46" fill="none" stroke="url(#reelmetal)" stroke-width="10"/>
+    <circle cx="-15" cy="-95" r="10" fill="#3a4552" fill-opacity="0.6"/>
+    <path d="M-15 -141 v92 M-61 -95 h92 M-48 -128 l66 66 M-48 -62 l66 -66" stroke="#3a4552" stroke-opacity="0.5" stroke-width="5"/>
+    <circle cx="-70" cy="-95" r="34" fill="none" stroke="url(#reelmetal)" stroke-width="8"/>
+    <circle cx="52" cy="0" r="26" fill="url(#bulbglow)"/>
+    <circle cx="52" cy="0" r="12" fill="#ffd98a" fill-opacity="0.7"/>
+    <path d="M-70 60 l-14 60 M40 60 l14 60" stroke="#3a4552" stroke-opacity="0.55" stroke-width="8"/>
+  </g>
+
+  <!-- dust dancing in the beam -->
+  <g fill="#efe6cf">
+    <circle cx="480" cy="330" r="2.5" fill-opacity="0.4"/>
+    <circle cx="620" cy="310" r="2" fill-opacity="0.35"/>
+    <circle cx="760" cy="285" r="2" fill-opacity="0.3"/>
+    <circle cx="900" cy="265" r="2" fill-opacity="0.28"/>
+    <circle cx="560" cy="360" r="1.6" fill-opacity="0.3"/>
+  </g>
+
+  <!-- film strip curling along the bottom -->
+  <g>
+    <path d="M0 690 q200 -70 400 0 t400 0 t400 0 v50 q-200 -60 -400 0 t-400 0 t-400 0 Z"
+          fill="#181a20" fill-opacity="0.45"/>
+    <g fill="#efe6cf" fill-opacity="0.3">
+      <rect x="40" y="668" width="16" height="12" rx="2" transform="rotate(-9 48 674)"/>
+      <rect x="140" y="650" width="16" height="12" rx="2" transform="rotate(-6 148 656)"/>
+      <rect x="240" y="642" width="16" height="12" rx="2" transform="rotate(-2 248 648)"/>
+      <rect x="340" y="646" width="16" height="12" rx="2" transform="rotate(4 348 652)"/>
+      <rect x="440" y="660" width="16" height="12" rx="2" transform="rotate(8 448 666)"/>
+      <rect x="540" y="668" width="16" height="12" rx="2" transform="rotate(-8 548 674)"/>
+      <rect x="640" y="650" width="16" height="12" rx="2" transform="rotate(-5 648 656)"/>
+      <rect x="740" y="643" width="16" height="12" rx="2"/>
+      <rect x="840" y="648" width="16" height="12" rx="2" transform="rotate(5 848 654)"/>
+      <rect x="940" y="662" width="16" height="12" rx="2" transform="rotate(8 948 668)"/>
+      <rect x="1040" y="668" width="16" height="12" rx="2" transform="rotate(-7 1048 674)"/>
+      <rect x="1140" y="652" width="16" height="12" rx="2" transform="rotate(-4 1148 658)"/>
+    </g>
+  </g>
+
+  <!-- marquee sign hanging top right -->
+  <g transform="translate(920 150)">
+    <path d="M-170 -60 h340 M0 -60 v-40" stroke="url(#reelmetal)" stroke-width="6" fill="none"/>
+    <rect x="-170" y="-60" width="340" height="110" rx="10" fill="#181a20" fill-opacity="0.4" stroke="url(#reelmetal)" stroke-width="4"/>
+    <g fill="#ffd98a">
+      <circle cx="-150" cy="-40" r="5" fill-opacity="0.8"/>
+      <circle cx="-100" cy="-40" r="5" fill-opacity="0.35"/>
+      <circle cx="-50" cy="-40" r="5" fill-opacity="0.8"/>
+      <circle cx="0" cy="-40" r="5" fill-opacity="0.35"/>
+      <circle cx="50" cy="-40" r="5" fill-opacity="0.8"/>
+      <circle cx="100" cy="-40" r="5" fill-opacity="0.35"/>
+      <circle cx="150" cy="-40" r="5" fill-opacity="0.8"/>
+      <circle cx="-150" cy="30" r="5" fill-opacity="0.35"/>
+      <circle cx="-100" cy="30" r="5" fill-opacity="0.8"/>
+      <circle cx="-50" cy="30" r="5" fill-opacity="0.35"/>
+      <circle cx="0" cy="30" r="5" fill-opacity="0.8"/>
+      <circle cx="50" cy="30" r="5" fill-opacity="0.35"/>
+      <circle cx="100" cy="30" r="5" fill-opacity="0.8"/>
+      <circle cx="150" cy="30" r="5" fill-opacity="0.35"/>
+    </g>
+    <path d="M-120 -5 h240" stroke="#efe6cf" stroke-opacity="0.25" stroke-width="14"/>
+  </g>
+
+  <!-- stacked reels + director's chair, lower right -->
+  <g transform="translate(1010 560)">
+    <circle r="52" fill="none" stroke="url(#reelmetal)" stroke-width="9"/>
+    <circle r="12" fill="#3a4552" fill-opacity="0.6"/>
+    <path d="M0 -52 v104 M-52 0 h104 M-37 -37 l74 74 M-37 37 l74 -74" stroke="#3a4552" stroke-opacity="0.5" stroke-width="5"/>
+    <circle cx="80" cy="24" r="36" fill="none" stroke="url(#reelmetal)" stroke-width="7"/>
+    <circle cx="80" cy="24" r="9" fill="#3a4552" fill-opacity="0.6"/>
+  </g>
+  <g transform="translate(700 600)" stroke="url(#reelmetal)" stroke-width="6" fill="none">
+    <path d="M-40 80 L20 -30 M40 80 L-20 -30"/>
+    <path d="M-34 -30 h68" stroke="url(#velvet)" stroke-width="18"/>
+    <path d="M-30 20 h60" stroke="url(#velvet)" stroke-width="14"/>
+  </g>
+</svg>

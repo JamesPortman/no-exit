@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>No Exit — Game History</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-bg="default">
+  <div class="chrome-bar">
+    <button id="theme-btn" type="button">☀️</button>
+  </div>
+  <div class="wrap wide">
+    <h1>📜 Game <span class="accent">History</span></h1>
+
+    <div class="card" id="auth-card">
+      <label for="admin-token">Host key</label>
+      <div class="answer-row">
+        <input type="text" id="admin-token" autocomplete="off">
+        <button id="load-btn">Load history</button>
+      </div>
+      <div class="error" id="error"></div>
+    </div>
+
+    <div id="games"></div>
+    <p class="muted small"><a href="/host.html" style="color:var(--accent)">← host console</a></p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/ui.js"></script>
+  <script>
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  $('admin-token').value = localStorage.getItem('escape:adminToken') || '';
+
+  async function load() {
+    $('error').textContent = '';
+    const adminToken = $('admin-token').value.trim();
+    try {
+      const { games } = await api('/api/history', { adminToken: adminToken || undefined });
+      localStorage.setItem('escape:adminToken', adminToken);
+      // Group rows by game code + minute, newest first (rows arrive ordered).
+      // Minute granularity absorbs the per-row timestamps of legacy games.
+      const byGame = new Map();
+      for (const r of games) {
+        const key = r.game_code + String(r.played_at).slice(0, 16);
+        if (!byGame.has(key)) byGame.set(key, []);
+        byGame.get(key).push(r);
+      }
+      $('games').innerHTML = [...byGame.values()].map((rows) => {
+        const first = rows[0];
+        const when = new Date(first.played_at).toLocaleString();
+        return `<div class="card">
+          <h3>${esc(first.adventure_slug)} <span class="muted small">— ${esc(first.game_code)}, ${esc(when)}</span></h3>
+          ${rows.map((r) => {
+            // Neon returns JSONB columns pre-parsed; older rows could be strings.
+            const players = Array.isArray(r.players_json)
+              ? r.players_json
+              : JSON.parse(r.players_json || '[]');
+            return `<div class="rank-row ${r.won ? 'first' : ''}">
+              <div class="rank-pos">${r.won ? '🏆' : ''}</div>
+              <div><strong>${esc(r.team_name)}</strong>
+                <div class="rank-detail">
+                  ${r.puzzles_solved}/${r.total_puzzles} puzzles
+                  ${r.finish_ms != null ? ` — escaped in ${fmtMs(r.finish_ms)}` : ''}
+                  ${r.penalty_ms > 0 ? ` (incl. ${fmtMs(r.penalty_ms)} penalties)` : ''}
+                  ${players.length ? ` — ${players.map(esc).join(', ')}` : ''}
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('') || '<div class="card muted">No games recorded yet.</div>';
+    } catch (e) {
+      $('error').textContent = e.message;
+    }
+  }
+  $('load-btn').addEventListener('click', load);
+  if ($('admin-token').value) load();
+  </script>
+</body>
+</html>

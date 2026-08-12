@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="milkyway" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7a6fd9" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#9a8fe8" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#7a6fd9" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="comettail" x1="1" y1="0" x2="0" y2="0.3">
+      <stop offset="0%" stop-color="#cfe4ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#5b8dd9" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="cometglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8f2ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#cfe4ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="domegrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a4266" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#2e2a42" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- milky way band -->
+  <path d="M-100 700 L500 -100 L780 -100 L80 800 Z" fill="url(#milkyway)"/>
+
+  <!-- starfield: varied sizes and brightness -->
+  <g fill="#e8ecf4">
+    <circle cx="90" cy="110" r="2.6" fill-opacity="0.55"/>
+    <circle cx="220" cy="360" r="1.6" fill-opacity="0.4"/>
+    <circle cx="340" cy="80" r="2" fill-opacity="0.5"/>
+    <circle cx="470" cy="250" r="1.4" fill-opacity="0.35"/>
+    <circle cx="590" cy="120" r="2.4" fill-opacity="0.5"/>
+    <circle cx="700" cy="330" r="1.6" fill-opacity="0.4"/>
+    <circle cx="150" cy="560" r="1.8" fill-opacity="0.4"/>
+    <circle cx="420" cy="480" r="1.4" fill-opacity="0.3"/>
+    <circle cx="640" cy="540" r="2" fill-opacity="0.4"/>
+    <circle cx="1120" cy="90" r="2.4" fill-opacity="0.5"/>
+    <circle cx="1010" cy="200" r="1.6" fill-opacity="0.4"/>
+    <circle cx="880" cy="120" r="1.8" fill-opacity="0.45"/>
+    <circle cx="60" cy="700" r="1.6" fill-opacity="0.3"/>
+    <circle cx="530" cy="640" r="1.5" fill-opacity="0.3"/>
+  </g>
+  <!-- a few twinkles -->
+  <g stroke="#e8ecf4" stroke-opacity="0.5" stroke-width="1.6">
+    <path d="M760 210 h14 M767 203 v14"/>
+    <path d="M250 190 h12 M256 184 v12"/>
+    <path d="M960 420 h12 M966 414 v12"/>
+  </g>
+
+  <!-- the comet -->
+  <circle cx="330" cy="150" r="34" fill="url(#cometglow)"/>
+  <circle cx="330" cy="150" r="9" fill="#e8f2ff" fill-opacity="0.8"/>
+  <path d="M340 142 L760 40 L820 90 L348 160 Z" fill="url(#comettail)"/>
+
+  <!-- constellation, hinting at the hunter -->
+  <g stroke="#9a8fe8" stroke-opacity="0.4" stroke-width="2" fill="#cfe4ff">
+    <path d="M120 300 L190 260 L270 300 M190 260 L180 380 L230 440 M180 380 L130 430" fill="none"/>
+    <circle cx="120" cy="300" r="3.5" fill-opacity="0.7"/>
+    <circle cx="190" cy="260" r="4" fill-opacity="0.8"/>
+    <circle cx="270" cy="300" r="3.5" fill-opacity="0.7"/>
+    <circle cx="180" cy="380" r="3.5" fill-opacity="0.7"/>
+    <circle cx="230" cy="440" r="3" fill-opacity="0.6"/>
+    <circle cx="130" cy="430" r="3" fill-opacity="0.6"/>
+  </g>
+
+  <!-- observatory on the ridge -->
+  <path d="M640 690 q140 -40 300 -20 q160 -30 260 20 L1200 800 L600 800 Z" fill="#2e2a42" fill-opacity="0.45"/>
+  <g transform="translate(940 560)">
+    <path d="M-150 130 a150 150 0 0 1 300 0 Z" fill="url(#domegrad)"/>
+    <!-- open slit with light -->
+    <path d="M-24 -12 L-14 130 L44 130 L34 -14 Q4 -22 -24 -12 Z" fill="#1a1626" fill-opacity="0.6"/>
+    <path d="M-10 20 L26 8" stroke="#ffd98a" stroke-opacity="0.6" stroke-width="4"/>
+    <!-- telescope barrel aimed at the comet -->
+    <path d="M10 60 L-210 -108 M28 74 L-192 -122 M-210 -108 L-192 -122" stroke="#8a93a5" stroke-opacity="0.5" stroke-width="4" fill="none"/>
+    <rect x="-160" y="130" width="320" height="40" fill="url(#domegrad)"/>
+    <rect x="-24" y="142" width="48" height="28" rx="4" fill="#ffd98a" fill-opacity="0.35"/>
+  </g>
+</svg>

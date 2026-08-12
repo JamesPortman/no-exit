@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="parchment" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8dcbf" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#c9b78a" stop-opacity="0.25"/>
+    </linearGradient>
+    <radialGradient id="oillamp" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="deskwood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6e5238" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4a3520" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="brassy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8c883" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#9a7328" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- lamplight over the desk -->
+  <circle cx="520" cy="360" r="360" fill="url(#oillamp)"/>
+
+  <!-- the great chart pinned across the wall -->
+  <g transform="translate(430 260) rotate(-2)">
+    <rect x="-330" y="-190" width="660" height="380" rx="6" fill="url(#parchment)"/>
+    <circle cx="-310" cy="-172" r="6" fill="#a03a3a" fill-opacity="0.6"/>
+    <circle cx="310" cy="-172" r="6" fill="#a03a3a" fill-opacity="0.6"/>
+    <circle cx="-310" cy="172" r="6" fill="#a03a3a" fill-opacity="0.6"/>
+    <!-- coastline -->
+    <path d="M-270 100 q60 -90 150 -60 q40 -80 130 -60 q80 -20 120 40 q60 10 40 70 q-30 60 -120 40 q-70 40 -150 10 q-110 20 -170 -40 Z"
+          fill="none" stroke="#6e5238" stroke-opacity="0.55" stroke-width="3"/>
+    <!-- islands -->
+    <path d="M-180 -80 q24 -16 44 0 q-4 20 -26 18 q-20 -2 -18 -18 Z" fill="#6e5238" fill-opacity="0.35"/>
+    <path d="M60 -120 q20 -12 36 2 q-4 16 -22 14 q-16 -2 -14 -16 Z" fill="#6e5238" fill-opacity="0.35"/>
+    <!-- dotted voyage line to an X -->
+    <path d="M-260 140 Q-140 60 -40 90 T160 20 T250 -80" fill="none" stroke="#a03a3a" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>
+    <path d="M240 -92 l22 22 M262 -92 l-22 22" stroke="#a03a3a" stroke-opacity="0.7" stroke-width="4"/>
+    <!-- compass rose on the chart -->
+    <g transform="translate(-220 -110)">
+      <circle r="34" fill="none" stroke="url(#brassy)" stroke-width="2.5"/>
+      <path d="M0 -30 L6 0 L0 30 L-6 0 Z" fill="#b98f3e" fill-opacity="0.6"/>
+      <path d="M-30 0 L0 -6 L30 0 L0 6 Z" fill="#8a6a28" fill-opacity="0.5"/>
+    </g>
+    <!-- sea monster doodle in the corner -->
+    <path d="M180 120 q16 -26 40 -10 q22 14 2 30 M196 104 q6 -14 -6 -22" fill="none" stroke="#6e5238" stroke-opacity="0.45" stroke-width="3"/>
+  </g>
+
+  <!-- the desk -->
+  <rect x="80" y="560" width="760" height="26" fill="url(#deskwood)"/>
+  <path d="M120 586 v160 M780 586 v160" stroke="url(#deskwood)" stroke-width="22"/>
+
+  <!-- rolled charts on the desk -->
+  <g transform="translate(200 540)">
+    <rect x="-60" y="-20" width="120" height="20" rx="10" fill="url(#parchment)"/>
+    <circle cx="-60" cy="-10" r="10" fill="none" stroke="#c9b78a" stroke-opacity="0.5" stroke-width="3"/>
+    <path d="M-30 -20 v20 M30 -20 v20" stroke="#a03a3a" stroke-opacity="0.4" stroke-width="3"/>
+  </g>
+  <g transform="translate(330 532) rotate(-6)">
+    <rect x="-70" y="-18" width="140" height="18" rx="9" fill="url(#parchment)"/>
+    <circle cx="70" cy="-9" r="9" fill="none" stroke="#c9b78a" stroke-opacity="0.5" stroke-width="3"/>
+  </g>
+
+  <!-- sextant -->
+  <g transform="translate(520 520)" stroke="url(#brassy)" stroke-width="5" fill="none">
+    <path d="M-40 20 A56 56 0 0 1 40 20"/>
+    <path d="M-40 20 L0 -44 L40 20"/>
+    <path d="M0 -44 V-64 M-14 -54 h28"/>
+    <circle cx="0" cy="-24" r="6"/>
+  </g>
+
+  <!-- oil lamp -->
+  <g transform="translate(660 500)">
+    <circle cx="0" cy="-20" r="60" fill="url(#oillamp)"/>
+    <path d="M-16 40 h32 l-6 -22 h-20 Z" fill="url(#brassy)"/>
+    <path d="M-10 18 q-8 -30 10 -48 q18 18 10 48 Z" fill="#ffd98a" fill-opacity="0.55"/>
+    <path d="M-20 42 h40" stroke="url(#brassy)" stroke-width="5"/>
+  </g>
+
+  <!-- ship in a bottle, right shelf -->
+  <g transform="translate(1000 240)">
+    <path d="M-90 30 h180 q24 0 24 -24 q0 -24 -24 -24 h-4 q-10 -22 -40 -22 h-92 q-34 0 -44 30 q-8 26 0 40 Z"
+          fill="#9ec4c8" fill-opacity="0.2" stroke="#9ec4c8" stroke-opacity="0.4" stroke-width="3"/>
+    <path d="M-40 8 l60 0 l-12 14 l-38 0 Z" fill="#6e5238" fill-opacity="0.5"/>
+    <path d="M-10 8 v-30 M-10 -26 l26 20 l-26 4" fill="#e8dcbf" fill-opacity="0.4" stroke="#6e5238" stroke-opacity="0.5" stroke-width="2"/>
+    <path d="M-120 34 q30 10 60 0" stroke="#9ec4c8" stroke-opacity="0.3" stroke-width="3" fill="none"/>
+  </g>
+
+  <!-- gull feather and ink pot -->
+  <g transform="translate(900 640)">
+    <path d="M0 0 q40 -60 90 -70 q-30 50 -74 76 Z" fill="#c8ccd6" fill-opacity="0.35"/>
+    <path d="M4 -2 q36 -44 80 -62" stroke="#8a93a5" stroke-opacity="0.45" stroke-width="2" fill="none"/>
+    <path d="M-40 10 a20 14 0 0 0 40 0 Z" fill="#181a20" fill-opacity="0.5"/>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="Georgia, serif">
+  <rect width="640" height="300" fill="#181a20"/>
+  <!-- A note pinned to the office corkboard -->
+  <rect x="90" y="30" width="460" height="240" fill="#efe6cf" transform="rotate(-2 320 150)"/>
+  <circle cx="320" cy="45" r="7" fill="#b34a3f"/>
+  <g fill="#3a3226" transform="rotate(-2 320 150)">
+    <text x="320" y="95" text-anchor="middle" font-size="20" font-style="italic">Maintenance —</text>
+    <text x="320" y="130" text-anchor="middle" font-size="20" font-style="italic">alarm override is my favourite bird:</text>
+    <text x="320" y="185" text-anchor="middle" font-size="40" letter-spacing="6">15 · 23 · 12</text>
+    <text x="320" y="235" text-anchor="middle" font-size="16" font-style="italic">— V. Blackwood, curator</text>
+  </g>
+</svg>

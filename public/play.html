@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>No Exit — Play</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="chrome-bar">
+    <select id="lang-select" aria-label="Language"></select>
+    <button id="theme-btn" type="button">☀️</button>
+  </div>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <strong id="team-name"></strong>
+        <div class="muted small" id="adventure-title"></div>
+      </div>
+      <div>
+        <div class="timer" id="timer">–:––</div>
+        <div class="penalty hidden" id="penalty"></div>
+      </div>
+    </div>
+
+    <div class="banner hidden" id="broadcast"></div>
+    <div class="banner warning hidden" id="time-warning"></div>
+
+    <!-- Lobby -->
+    <div id="view-lobby" class="hidden">
+      <div class="card">
+        <h2 id="lobby-title"></h2>
+        <p id="lobby-intro" class="muted"></p>
+        <p data-i18n="play.waiting">Waiting for your host to start the game…</p>
+        <div class="team-list" id="lobby-roster"></div>
+      </div>
+    </div>
+
+    <!-- Paused -->
+    <div id="view-paused" class="hidden">
+      <div class="card" style="text-align:center">
+        <h2 data-i18n="play.paused">⏸ Game paused</h2>
+        <p class="muted" data-i18n="play.pausedDesc">Your host has paused the clock. Stretch!</p>
+      </div>
+    </div>
+
+    <!-- Running -->
+    <div id="view-play" class="hidden">
+      <div class="dots" id="dots"></div>
+      <div class="card" id="puzzle-card">
+        <h2 id="puzzle-title"></h2>
+        <div class="puzzle-prompt" id="puzzle-prompt"></div>
+        <div class="puzzle-media" id="puzzle-media"></div>
+        <div id="hints"></div>
+        <div id="hint-controls"></div>
+        <label for="guess" data-i18n="play.answerLabel">Your answer</label>
+        <div class="answer-row">
+          <input type="text" id="guess" autocomplete="off"
+                 data-i18n-placeholder="play.answerPlaceholder" placeholder="type your answer…">
+          <button id="submit" data-i18n="play.submit">Submit</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+      <div id="team-finished" class="card hidden" style="text-align:center">
+        <h2 data-i18n="play.escaped">🎉 You escaped!</h2>
+        <p class="muted" data-i18n="play.waitOthers">Waiting for the other teams — watch the final ranking on the call.</p>
+      </div>
+      <div id="solved-log"></div>
+    </div>
+
+    <!-- Finished -->
+    <div id="view-finished" class="hidden">
+      <div class="card">
+        <h2 data-i18n="play.gameOver">⏱ Game over</h2>
+        <div id="ranking"></div>
+      </div>
+    </div>
+
+    <div class="error" id="fatal"></div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/effects.js"></script>
+  <script src="/js/play.js"></script>
+</body>
+</html>

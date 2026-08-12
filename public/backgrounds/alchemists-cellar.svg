@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="candleglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="greenpotion" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7dd98a" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#2e7d4f" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="amberpotion" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#b9762a" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="violetpotion" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c8a0e8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6a3a9a" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="shelfwood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6e5238" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4a3520" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- candlelight pooling -->
+  <circle cx="820" cy="480" r="300" fill="url(#candleglow)"/>
+
+  <!-- stone arch hint -->
+  <path d="M40 800 V300 a260 260 0 0 1 520 0 V800" fill="none" stroke="#8a93a5" stroke-opacity="0.2" stroke-width="6"/>
+
+  <!-- shelves -->
+  <rect x="90" y="300" width="420" height="12" fill="url(#shelfwood)"/>
+  <rect x="90" y="470" width="420" height="12" fill="url(#shelfwood)"/>
+
+  <!-- potion bottles, top shelf -->
+  <g>
+    <path d="M140 300 h44 v-52 a22 22 0 0 0 -12 -18 v-16 h-20 v16 a22 22 0 0 0 -12 18 Z" fill="url(#greenpotion)"/>
+    <rect x="149" y="-392" width="26" height="8" rx="3" transform="translate(0 690)" fill="#b98f3e" fill-opacity="0.5"/>
+    <path d="M230 300 h56 v-40 a28 20 0 0 0 -16 -16 v-26 h-24 v26 a28 20 0 0 0 -16 16 Z" fill="url(#amberpotion)"/>
+    <path d="M340 300 h36 v-70 a18 18 0 0 0 -10 -14 v-12 h-16 v12 a18 18 0 0 0 -10 14 Z" fill="url(#violetpotion)"/>
+    <circle cx="358" cy="248" r="4" fill="#c8a0e8" fill-opacity="0.5"/>
+    <path d="M420 300 h50 v-30 q0 -26 -25 -26 q-25 0 -25 26 Z" fill="url(#greenpotion)"/>
+  </g>
+
+  <!-- alembic on the lower shelf, dripping -->
+  <g transform="translate(200 470)">
+    <path d="M0 0 q-46 -12 -46 -58 q0 -40 46 -46 q46 6 46 46 q0 46 -46 58 Z" fill="url(#amberpotion)"/>
+    <path d="M40 -80 q60 -16 78 30 l-12 6 q-14 -34 -62 -24 Z" fill="#8a93a5" fill-opacity="0.3"/>
+    <circle cx="112" cy="-30" r="4" fill="#ffd98a" fill-opacity="0.6"/>
+    <circle cx="114" cy="-8" r="3" fill="#ffd98a" fill-opacity="0.45"/>
+    <path d="M104 4 h24 v8 h-24 Z" fill="#4a3520" fill-opacity="0.5"/>
+  </g>
+  <!-- mortar and candle -->
+  <g transform="translate(380 470)">
+    <path d="M-28 0 h56 q-4 -26 -28 -26 q-24 0 -28 26 Z" fill="#8a93a5" fill-opacity="0.35"/>
+    <path d="M10 -22 l26 -22" stroke="#8a93a5" stroke-opacity="0.4" stroke-width="6"/>
+  </g>
+  <g transform="translate(470 470)">
+    <rect x="-10" y="-46" width="20" height="46" fill="#efe6cf" fill-opacity="0.4"/>
+    <path d="M0 -46 q-6 -12 0 -20 q8 8 0 20" fill="#ffd98a" fill-opacity="0.8"/>
+  </g>
+
+  <!-- hanging herbs -->
+  <g stroke="#5e8a2f" stroke-opacity="0.4" stroke-width="3" fill="none">
+    <path d="M600 40 v40 M600 80 l-14 34 M600 80 l14 34 M600 80 l0 40"/>
+    <path d="M660 40 v30 M660 70 l-12 30 M660 70 l12 30"/>
+  </g>
+
+  <!-- the great cauldron, right, with rising bubbles -->
+  <g transform="translate(860 640)">
+    <path d="M-110 0 q0 -50 110 -50 q110 0 110 50 q0 70 -110 70 q-110 0 -110 -70 Z" fill="#2e3a45" fill-opacity="0.5"/>
+    <ellipse cx="0" cy="-46" rx="104" ry="18" fill="url(#greenpotion)"/>
+    <circle cx="-30" cy="-90" r="9" fill="#7dd98a" fill-opacity="0.4"/>
+    <circle cx="10" cy="-130" r="6" fill="#7dd98a" fill-opacity="0.32"/>
+    <circle cx="40" cy="-170" r="4" fill="#7dd98a" fill-opacity="0.25"/>
+    <path d="M-70 70 l-16 24 M70 70 l16 24" stroke="#2e3a45" stroke-opacity="0.5" stroke-width="8"/>
+  </g>
+
+  <!-- floating rune sparks -->
+  <g fill="#ffd98a">
+    <circle cx="700" cy="240" r="2.5" fill-opacity="0.4"/>
+    <circle cx="1040" cy="330" r="2" fill-opacity="0.3"/>
+    <circle cx="960" cy="190" r="2" fill-opacity="0.3"/>
+    <circle cx="580" cy="560" r="2" fill-opacity="0.3"/>
+  </g>
+</svg>

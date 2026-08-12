@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>No Exit — Host Console</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-bg="default">
+  <div class="chrome-bar">
+    <button id="theme-btn" type="button">☀️</button>
+  </div>
+  <div class="wrap wide">
+    <div class="topbar">
+      <div>
+        <h1 style="margin:0">🎛 Host <span class="accent">Console</span></h1>
+        <div class="muted small" id="adventure-title"></div>
+      </div>
+      <div class="timer" id="timer">–:––</div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between">
+        <div>
+          <div class="muted small">Game code — read it out, or share the join link</div>
+          <div class="code-display" id="code-display"></div>
+          <div class="muted small" id="join-link"></div>
+        </div>
+        <div id="controls">
+          <button id="start-btn">▶ Start game</button>
+          <button class="secondary" id="pause-btn">⏸ Pause</button>
+          <button class="secondary" id="resume-btn">▶ Resume</button>
+          <button class="danger" id="end-btn">■ End game</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="broadcast-msg" placeholder="Broadcast a message to all players…" maxlength="200">
+        <button class="secondary" id="broadcast-btn" style="margin-top:0">📢 Send</button>
+      </div>
+      <div class="error" id="ctl-error"></div>
+    </div>
+
+    <div class="host-grid" id="teams"></div>
+
+    <div class="card hidden" id="ranking-card">
+      <h2>Standings</h2>
+      <div id="ranking"></div>
+    </div>
+
+    <div class="card">
+      <details id="answer-key-details">
+        <summary style="cursor:pointer"><strong>🔑 Answer key</strong>
+          <span class="muted small">(loads only when opened — close before screen-sharing)</span></summary>
+        <div id="answer-key" style="margin-top:12px"></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>Activity</h2>
+      <div class="log" id="log"></div>
+    </div>
+
+    <p class="muted small"><a href="/history.html" style="color:var(--accent)">📜 Past games</a></p>
+
+    <div class="error" id="fatal"></div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/host.js"></script>
+</body>
+</html>

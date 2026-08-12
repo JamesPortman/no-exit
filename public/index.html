@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>No Exit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-bg="default">
+  <div class="chrome-bar">
+    <select id="lang-select" aria-label="Language"></select>
+    <button id="theme-btn" type="button">☀️</button>
+  </div>
+  <div class="wrap">
+    <h1>🔐 No <span class="accent">Exit</span></h1>
+
+    <div class="card" id="join-card">
+      <h2 data-i18n="join.title">Join a game</h2>
+      <label for="join-code" data-i18n="join.codeLabel">Game code</label>
+      <input type="text" id="join-code" maxlength="4" autocapitalize="characters"
+             autocomplete="off" placeholder="ABCD" style="text-transform:uppercase">
+      <div id="join-lookup" class="hidden">
+        <p class="muted" id="join-title"></p>
+        <label for="join-name" data-i18n="join.nameLabel">Your name</label>
+        <input type="text" id="join-name" maxlength="24" autocomplete="off"
+               data-i18n-placeholder="join.nameLabel" placeholder="Your name">
+        <label><span data-i18n="join.teamLabel">Your team</span>
+          <span class="small" data-i18n="join.teamHint">(your host tells you which)</span></label>
+        <div id="join-teams"></div>
+      </div>
+      <button id="join-btn" data-i18n="join.button">Join</button>
+      <div class="error" id="join-error"></div>
+    </div>
+
+    <div class="card" id="host-card">
+      <h2 data-i18n="host.title">Host a game</h2>
+      <p class="muted small" data-i18n="host.desc">For the event host only — creates a new game and opens the host console.</p>
+      <button class="secondary" id="host-toggle" data-i18n="host.setup">Set up a game…</button>
+      <div id="host-form" class="hidden">
+        <label for="adv-select" data-i18n="host.adventure">Adventure</label>
+        <select id="adv-select"></select>
+        <p class="muted small" id="adv-intro"></p>
+        <label data-i18n="host.presets">Quick setup</label>
+        <div id="preset-row"></div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label for="duration-min" data-i18n="host.duration">Duration (minutes)</label>
+            <input type="number" id="duration-min" min="5" max="120" inputmode="numeric">
+          </div>
+          <div style="flex:1">
+            <label for="puzzle-count" data-i18n="host.puzzles">Puzzles</label>
+            <select id="puzzle-count"></select>
+          </div>
+        </div>
+        <p class="muted small" data-i18n="host.puzzlesHint">Fewer than all puzzles ends the game early and skips the finale.</p>
+        <label data-i18n="host.teams">Team names (2–3 teams)</label>
+        <input type="text" id="team-1" data-i18n-placeholder="host.team1" placeholder="Team 1 name" value="Red Herrings">
+        <input type="text" id="team-2" data-i18n-placeholder="host.team2" placeholder="Team 2 name" value="Locked Legends" style="margin-top:8px">
+        <input type="text" id="team-3" data-i18n-placeholder="host.team3" placeholder="Team 3 name (optional)" value="Cryptic Crew" style="margin-top:8px">
+        <label for="admin-token"><span data-i18n="host.key">Host key</span>
+          <span class="small" data-i18n="host.keyHint">(leave blank if not configured)</span></label>
+        <input type="text" id="admin-token" autocomplete="off">
+        <button id="create-btn" data-i18n="host.create">Create game</button>
+        <div class="error" id="create-error"></div>
+      </div>
+    </div>
+    <p class="muted small" style="text-align:center">
+      <a href="/architecture" style="color:var(--muted)">how it's built</a>
+    </p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Architecture — No Exit</title>
+<style>
+  :root {
+    --bg: #12141a;
+    --panel: #1c2028;
+    --raised: #242a35;
+    --text: #e8e6e1;
+    --muted: #9aa3b2;
+    --soft: #c3c0b8;
+    --accent: #e0a83c;
+    --good: #4caf6e;
+    --blue: #5b8dd9;
+    --bad: #d9534f;
+    --line: #333a47;
+    --hairline: #262c38;
+    --serif: Georgia, "Iowan Old Style", Palatino, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  [data-theme="day"] {
+    --bg: #f2efe9;
+    --panel: #fbfaf7;
+    --raised: #e9e5db;
+    --text: #26292f;
+    --muted: #67707e;
+    --soft: #4a5058;
+    --accent: #9a6c10;
+    --good: #2e7d4f;
+    --blue: #2f5e8f;
+    --bad: #b73a33;
+    --line: #d4cec1;
+    --hairline: #e0dacd;
+  }
+  /* diagram SVGs use literal accent hexes; remap onto theme vars */
+  [fill="#e0a83c"] { fill: var(--accent); }  [stroke="#e0a83c"] { stroke: var(--accent); }
+  [fill="#4caf6e"] { fill: var(--good); }    [stroke="#4caf6e"] { stroke: var(--good); }
+  [fill="#5b8dd9"] { fill: var(--blue); }    [stroke="#5b8dd9"] { stroke: var(--blue); }
+  [fill="#d9534f"] { fill: var(--bad); }     [stroke="#d9534f"] { stroke: var(--bad); }
+  [fill="#9aa3b2"] { fill: var(--muted); }   [stroke="#9aa3b2"] { stroke: var(--muted); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.55; }
+  header.top {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 14px 22px 12px; border-bottom: 1px solid var(--line);
+  }
+  header.top .brand { font-family: var(--serif); font-size: 1.35rem; }
+  header.top .brand b { color: var(--accent); font-weight: 600; }
+  header.top a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+  header.top a:hover { text-decoration: underline; }
+  #themeBtn { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px; font-size: 0.95rem; cursor: pointer; color: var(--text); }
+  main { max-width: 1020px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-family: var(--serif); font-size: 2.2rem; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; margin: 0 0 12px; }
+  section { margin-bottom: 52px; }
+  p.lede { color: var(--muted); max-width: 740px; margin: 0 0 20px; }
+  .summary { border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; max-width: 780px; margin-bottom: 20px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .summary .kicker { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .summary p { margin: 0; font-size: 0.95rem; }
+  .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 16px; }
+  .chip { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--panel); }
+  .chip dt { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .chip dd { margin: 3px 0 0; font-weight: 600; font-size: 0.92rem; }
+  .cards { display: grid; gap: 14px; }
+  .cards.cols2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .cards.cols3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; background: var(--panel); }
+  .card .title { font-weight: 600; margin-bottom: 6px; }
+  .card p, .card li { font-size: 0.9rem; color: var(--soft); }
+  .card p { margin: 0; }
+  .card ol, .card ul { margin: 0; padding-left: 20px; }
+  .card li { margin-bottom: 5px; }
+  code { font-family: var(--mono); font-size: 0.84em; background: var(--raised); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .diagram { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--panel); overflow-x: auto; margin-bottom: 14px; }
+  .diagram svg { width: 100%; height: auto; min-width: 640px; display: block; color: var(--text); }
+  table.plain { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  table.plain th { text-align: left; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 8px 10px; }
+  table.plain td { padding: 8px 10px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  .keys td:first-child { font-family: var(--mono); font-size: 0.82rem; white-space: nowrap; color: var(--accent); }
+  pre.repomap, pre.block {
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.6;
+    border: 1px solid var(--line); border-radius: 10px; padding: 18px;
+    background: var(--panel); overflow-x: auto; color: var(--soft);
+  }
+  .formula { font-family: var(--mono); font-size: 0.98rem; color: var(--accent); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; display: inline-block; margin-bottom: 14px; }
+  ul.notes { padding-left: 20px; margin: 0; }
+  ul.notes li { font-size: 0.9rem; color: var(--soft); margin-bottom: 7px; }
+</style>
+</head>
+<body>
+<script>
+  document.documentElement.dataset.theme =
+    localStorage.getItem('escape:theme') === 'day' ? 'day' : 'night';
+</script>
+<header class="top">
+  <span class="brand">🔐 No <b>Exit</b></span>
+  <span style="display:flex;gap:14px;align-items:baseline">
+    <button id="themeBtn" aria-label="Toggle day/night mode" title="Day / night">🌙</button>
+    <a href="/">&larr; Back to the game</a>
+  </span>
+</header>
+<main>
+  <h1>Architecture</h1>
+  <p class="lede">
+    How No Exit is built — the path from a player's browser to Redis and
+    Postgres, the game state machine and its lazy transitions, the content
+    pipeline that keeps every answer server-side, and the CI gate in front of
+    every deploy. Written for engineers extending or operating the system.
+    Same architectural family as Terra Incognita; this page documents where
+    it follows that pattern and where it diverges.
+  </p>
+
+  <div class="summary">
+    <div class="kicker">Executive summary</div>
+    <p>
+      No Exit is a hosted virtual escape room for remote team events: up to
+      16 players on a video call split into 2–3 competing teams, racing the
+      same ~50-minute, ten-puzzle adventure while a host watches progress and
+      dispenses hints. The client is three static HTML pages (join, play,
+      host console) with vanilla JS — no framework, no build step. A thin set
+      of Vercel serverless functions keeps game state in Upstash Redis
+      (auto-expiring), writes one results row per team to Neon Postgres when
+      a game ends, and enforces the one inviolable rule: <em>puzzle answers
+      never leave the server</em>. Interface localizes to English, Spanish,
+      and Portuguese; puzzle content is English. Ten adventures ship in the
+      repo as encrypted content, opened at runtime with a key held outside it.
+    </p>
+  </div>
+  <dl class="chips">
+    <div class="chip"><dt>Client</dt><dd>3 static pages, vanilla JS</dd></div>
+    <div class="chip"><dt>Transport</dt><dd>2s polling — no websockets</dd></div>
+    <div class="chip"><dt>Game state</dt><dd>Upstash Redis, 6h TTL</dd></div>
+    <div class="chip"><dt>History</dt><dd>Neon Postgres, 1 write/game</dd></div>
+    <div class="chip"><dt>Auth</dt><dd>Bearer-style tokens, no accounts</dd></div>
+    <div class="chip"><dt>Tests</dt><dd>117 unit + 2 Playwright, gate CI</dd></div>
+  </dl>
+
+  <section>
+    <h2>1 · Runtime request path</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace" font-size="13">
+        <g fill="none" stroke="#9aa3b2" stroke-width="1.5">
+          <rect x="20" y="40" width="180" height="70" rx="10"/>
+          <rect x="20" y="150" width="180" height="70" rx="10"/>
+          <rect x="300" y="30" width="220" height="90" rx="10" stroke="#e0a83c"/>
+          <rect x="300" y="160" width="220" height="70" rx="10" stroke="#e0a83c"/>
+          <rect x="640" y="30" width="220" height="90" rx="10" stroke="#4caf6e"/>
+          <rect x="640" y="160" width="220" height="70" rx="10" stroke="#5b8dd9"/>
+        </g>
+        <g fill="currentColor">
+          <text x="110" y="68" text-anchor="middle">player browser</text>
+          <text x="110" y="88" text-anchor="middle" fill="#9aa3b2">play.html · poll 2s</text>
+          <text x="110" y="178" text-anchor="middle">host browser</text>
+          <text x="110" y="198" text-anchor="middle" fill="#9aa3b2">host.html · poll 2s</text>
+          <text x="410" y="58" text-anchor="middle">Vercel static</text>
+          <text x="410" y="78" text-anchor="middle" fill="#9aa3b2">public/ pages, art,</text>
+          <text x="410" y="96" text-anchor="middle" fill="#9aa3b2">i18n, effects</text>
+          <text x="410" y="188" text-anchor="middle">Vercel functions</text>
+          <text x="410" y="208" text-anchor="middle" fill="#9aa3b2">api/*.js</text>
+          <text x="750" y="58" text-anchor="middle">Upstash Redis</text>
+          <text x="750" y="78" text-anchor="middle" fill="#9aa3b2">game:CODE* keys</text>
+          <text x="750" y="96" text-anchor="middle" fill="#9aa3b2">TTL 6h</text>
+          <text x="750" y="188" text-anchor="middle">Neon Postgres</text>
+          <text x="750" y="208" text-anchor="middle" fill="#9aa3b2">game_results</text>
+        </g>
+        <g stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="none">
+          <path d="M200 70 H300"/>
+          <path d="M200 185 H300"/>
+          <path d="M215 90 q40 60 85 90"/>
+          <path d="M520 180 q60 -40 120 -95"/>
+          <path d="M520 200 H640"/>
+        </g>
+        <g fill="#9aa3b2" font-size="11">
+          <text x="250" y="62">GET</text>
+          <text x="235" y="150">/api/state·answer·hint·host</text>
+          <text x="560" y="120">every read/write</text>
+          <text x="560" y="216">once, on finish</text>
+        </g>
+      </svg>
+    </div>
+    <ul class="notes">
+      <li>Everything a player sees is a static file; all game logic lives in
+        eight functions: <code>config</code>, <code>lookup</code>,
+        <code>create</code>, <code>join</code>, <code>state</code>,
+        <code>answer</code>, <code>hint</code>, <code>host</code>
+        (+ <code>history</code>).</li>
+      <li>Both roles poll <code>/api/state</code> every 2 seconds. State
+        changes are minute-scale, so polling beats websocket complexity at
+        this size — a lesson inherited directly from Terra Incognita's live
+        rooms.</li>
+      <li>Locally, <code>dev-server.js</code> maps the same handlers onto
+        <code>localhost:3400</code> and <code>store.js</code> falls back to a
+        file store in the OS temp dir — the full game runs with zero cloud
+        dependencies, which is also how unit tests and E2E run in CI.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2 · Game state machine</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 960 170" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace" font-size="14">
+        <g fill="none" stroke-width="2">
+          <rect x="30" y="55" width="150" height="56" rx="12" stroke="#9aa3b2"/>
+          <rect x="300" y="55" width="150" height="56" rx="12" stroke="#4caf6e"/>
+          <rect x="300" y="10" width="0" height="0"/>
+          <rect x="560" y="10" width="150" height="50" rx="12" stroke="#e0a83c"/>
+          <rect x="780" y="55" width="150" height="56" rx="12" stroke="#d9534f"/>
+        </g>
+        <g fill="currentColor" text-anchor="middle">
+          <text x="105" y="88">lobby</text>
+          <text x="375" y="88">running</text>
+          <text x="635" y="40">paused</text>
+          <text x="855" y="88">finished</text>
+        </g>
+        <g stroke="#9aa3b2" stroke-width="1.5" fill="none">
+          <path d="M180 83 H300"/>
+          <path d="M450 70 q40 -35 110 -38"/>
+          <path d="M560 50 q-40 35 -110 30"/>
+          <path d="M450 90 H780"/>
+        </g>
+        <g fill="#9aa3b2" font-size="11">
+          <text x="205" y="75">host: start</text>
+          <text x="465" y="24">host: pause</text>
+          <text x="480" y="105">host: resume</text>
+          <text x="580" y="105">host: end · timer expiry (lazy) · —</text>
+          <text x="580" y="122">results written once via recordResultsOnce</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cards cols2">
+      <div class="card">
+        <div class="title">Lazy transitions, no cron</div>
+        <p>Nothing runs in the background. Timer expiry is computed on
+        <em>read</em>: every <code>/api/state</code> poll calls
+        <code>maybeExpire()</code>, which flips <code>running →
+        finished</code> when the clock runs out. Two polls racing produce the
+        same outcome, so the race is benign — the same philosophy applied to
+        teammate double-submits and log appends throughout.</p>
+      </div>
+      <div class="card">
+        <div class="title">Pause math</div>
+        <p>Elapsed play time excludes pauses:</p>
+        <p style="margin-top:8px"><code>elapsed = end − startAt − pauseAccumMs</code></p>
+        <p style="margin-top:8px">where <code>end</code> is <code>pausedAt</code> while
+        paused, <code>endedAt</code> when finished, else <em>now</em>. Ending
+        a paused game freezes <code>endedAt</code> at the pause point, so a
+        long host huddle never counts against anyone.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · Data model</h2>
+    <table class="plain keys">
+      <tr><th>Redis key</th><th>Contents</th></tr>
+      <tr><td>game:CODE</td><td>Meta: state, <code>startAt</code>/<code>pausedAt</code>/<code>pauseAccumMs</code>/<code>endedAt</code>, duration, teams, <code>hostToken</code>, broadcast, <code>resultsWritten</code> flag. Codes are 4 chars from an alphabet without 0/1/I/L/O.</td></tr>
+      <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs}</code>. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
+      <tr><td>game:CODE:team:ID</td><td>Per-team progress: <code>puzzleIdx</code>, solves (with elapsed-ms stamps), <code>hintsTaken</code> per puzzle, <code>penaltyMs</code>, <code>wrongCount</code>, <code>finishedAtMs</code>.</td></tr>
+      <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, host actions), capped at 200 entries.</td></tr>
+      <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/join/lookup/history, per-<em>team</em> (15/min) on answer attempts.</td></tr>
+    </table>
+    <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
+      All keys carry a 6-hour TTL — a finished game simply evaporates.
+      Durable history is one Postgres table, <code>game_results</code>
+      (one row per team per game: adventure, players, solved count, adjusted
+      finish, penalties, winner flag), written exactly once when a game
+      reaches <code>finished</code>, guarded by a flag saved <em>before</em>
+      the insert so a poll race can at worst drop the row, never duplicate
+      it. Test-fixture adventures are never recorded.
+    </p>
+  </section>
+
+  <section>
+    <h2>4 · The anti-spoiler pipeline</h2>
+    <div class="cards cols2">
+      <div class="card">
+        <div class="title">Answers exist in exactly one place</div>
+        <p>Each adventure is pure data — ten puzzles with accepted answers,
+        ordered hints with penalties, and a solve message that doubles as the
+        meta-puzzle's token. Content is loaded only by
+        <code>api/_lib/content.js</code>, whose sanitizer strips answers,
+        patterns, unrevealed hint text, unearned solve messages, and
+        <em>all future puzzles</em> from every player response.</p>
+      </div>
+      <div class="card">
+        <div class="title">Sealed at rest, because the repo is public</div>
+        <p>The sanitizer stops answers reaching a browser mid-game; it can't
+        stop someone reading the source. So the ten real adventures are
+        committed only as AES-256-GCM ciphertext in
+        <code>content/sealed/*.enc</code>, opened at load time with
+        <code>ADVENTURE_KEY</code> — a Vercel environment variable in
+        production, an Actions secret in CI, never in the repository. Two
+        plaintext fixtures stay behind so the format is documented by example
+        and a clone with no key still runs the whole engine suite. GCM's auth
+        tag means a tampered file fails loudly rather than loading junk.</p>
+      </div>
+      <div class="card">
+        <div class="title">Enforced by tests, not discipline</div>
+        <p>The fixture adventure's secrets are distinctive
+        (<code>XYZZY-…</code>) strings; unit tests grep entire serialized API
+        responses for them at every stage of play. The host console is
+        sanitized too — safe to screen-share — with the full answer key
+        available only via an explicit <code>?answers=1</code> fetch when the
+        host opens the crib sheet.</p>
+      </div>
+      <div class="card">
+        <div class="title">Forgiving answer checking</div>
+        <p>Both the guess and the authored answers are normalized —
+        lowercase, accents folded (NFKD), punctuation stripped, whitespace
+        collapsed — so “Búho!” matches “buho”. An optional regex per puzzle
+        handles patterned answers. The submitted <code>puzzleId</code> guards
+        against double-advance when two teammates answer simultaneously.</p>
+      </div>
+      <div class="card">
+        <div class="title">Meta chains are machine-verified</div>
+        <p>Every adventure's finale derives from tokens its own solve
+        messages hand out — initials, quantity sorting, constraint
+        elimination, dial lookup, Roman-numeral arithmetic, or walking a
+        chart. CI parses each chain out of the content and <em>solves it</em>
+        (including simulating the chart walk square by square), so an edit
+        that breaks a puzzle chain cannot deploy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5 · Scoring &amp; ranking</h2>
+    <div class="formula">adjusted = elapsedAtLastSolve + penaltyMs</div>
+    <ul class="notes">
+      <li>Teams rank by <strong>puzzles solved</strong> (descending), then by
+        <strong>adjusted time</strong> (ascending). Finished teams use their
+        frozen finish time; unfinished teams use their last solve plus
+        penalties, so earlier progress wins ties at the buzzer.</li>
+      <li>Each hint reveals in order and adds its penalty exactly once, no
+        matter how many teammates click. Host-granted free hints reveal
+        without penalty; host force-advance marks the puzzle solved with a
+        visible “host assist” flag.</li>
+      <li>Off-tab telemetry (a Terra Incognita tradition): the client
+        accumulates hidden-tab time while the game runs and reports it with
+        its polls; the server clamps it and only lets it grow. It surfaces —
+        only when nonzero — per player on the host console and as a team
+        total on the final ranking. A deterrent, not a penalty.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6 · Security model</h2>
+    <div class="cards cols3">
+      <div class="card">
+        <div class="title">Capability tokens, no accounts</div>
+        <p><code>hostToken</code> (UUID) is minted at creation;
+        players get a per-player UUID token at join, held in
+        <code>localStorage</code> for refresh survival. Every endpoint checks
+        the caller's token against Redis. <code>ADMIN_TOKEN</code> (env)
+        gates game creation and the history page.</p>
+      </div>
+      <div class="card">
+        <div class="title">Rate limits</div>
+        <p>Answer attempts: 15/minute <em>per team</em> in Redis — no
+        brute-forcing puzzles. Create/join/lookup/history: fixed-window
+        per-IP. Loopback traffic without a proxy header is exempt so local
+        dev and E2E never throttle; real Vercel traffic always carries
+        <code>x-forwarded-for</code>.</p>
+      </div>
+      <div class="card">
+        <div class="title">Host controls</div>
+        <p>Pause/resume, broadcast, free hint, force-advance, kick (removes
+        the roster entry; the kicked client's next poll 403s and returns to
+        the join page), and end. All host actions append to the audit log the
+        console displays.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7 · Client architecture</h2>
+    <ul class="notes">
+      <li><strong>Three pages, one poll loop each.</strong> The play page is a
+        state renderer: every 2s it repaints lobby / running / paused /
+        finished from the server response. The input field only resets on
+        puzzle transition, so polling never eats a half-typed guess.</li>
+      <li><strong>Drift-proof timer.</strong> Each response anchors
+        <code>remainingMs</code> to <code>serverNow</code>; the client
+        extrapolates between polls, so clock skew on a player's machine never
+        shows a wrong countdown. Client-side 5-minute and 1-minute warnings
+        fire from the same anchor, localized per player.</li>
+      <li><strong>i18n.</strong> Interface strings ship as EN/ES/PT
+        dictionaries (<code>public/js/i18n.js</code>); static markup uses
+        <code>data-i18n</code> attributes, dynamic strings go through
+        <code>t()</code>. A test enforces identical key sets and placeholder
+        parity across locales. Puzzle content stays English by design —
+        localized adventures would be authored natively, not translated.</li>
+      <li><strong>Theme &amp; art.</strong> A day/night toggle swaps CSS
+        variables; each adventure maps to a hand-drawn SVG scene rendered as
+        a fixed background layer, drawn in translucent midtones so one file
+        serves both themes. Unknown slugs fall back to the keyhole motif.</li>
+      <li><strong>Effects.</strong> Chimes are synthesized with the Web Audio
+        API (no assets); confetti is a ~50-line canvas overlay. Both suppress
+        on first render so a page refresh never replays a celebration.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>8 · CI/CD &amp; operations</h2>
+    <div class="cards cols2">
+      <div class="card">
+        <div class="title">Every push</div>
+        <ol>
+          <li>117 Vitest unit tests — engine, timing, sanitizer leak checks,
+            content schema + meta chains, i18n parity, host tools — run
+            against the file store (no cloud needed).</li>
+          <li>Playwright drives a real multi-team game through the actual UI:
+            host + two player browsers, wrong answer, hint, pause,
+            force-advance, ranking, refresh-resume.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="title">Main only, after green</div>
+        <ol>
+          <li><code>vercel pull → build → deploy --prebuilt --prod</code>
+            with a scoped token from GitHub secrets.</li>
+          <li>Vercel's own git auto-deploy is <em>disabled</em>
+            (<code>vercel.json</code>) — a red suite blocks production
+            entirely. Same gate design as Terra Incognita.</li>
+        </ol>
+      </div>
+    </div>
+    <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
+      Environment: <code>KV_REST_API_URL/TOKEN</code> (Upstash),
+      <code>DATABASE_URL</code> (Neon), <code>ADMIN_TOKEN</code>. All three
+      absent locally — file store + skipped history writes keep every feature
+      testable offline.
+    </p>
+  </section>
+
+  <section>
+    <h2>9 · Repository map</h2>
+    <pre class="repomap">EscapeRoom/
+├── public/                     # everything Vercel serves statically
+│   ├── index.html · play.html · host.html · history.html · architecture.html
+│   ├── js/                     # api client, i18n, ui chrome, effects, per-page logic
+│   ├── css/style.css           # theme variables (night/day) + all styling
+│   ├── backgrounds/            # one hand-drawn SVG scene per adventure
+│   └── puzzles/&lt;slug&gt;/         # images referenced by puzzle prompts
+├── api/
+│   ├── config · lookup · create · join · state · answer · hint · host · history
+│   └── _lib/
+│       ├── store.js            # Upstash Redis ⇄ file-store fallback (from TI)
+│       ├── games.js            # engine: codes, timing, ranking, answer checking
+│       ├── content.js          # adventure loader + anti-spoiler sanitizer
+│       ├── ratelimit.js        # fixed-window IP + team limiters (from TI)
+│       └── db.js               # Neon game_results writer (once per game)
+├── content/adventures/         # plaintext fixtures + authoring guide
+├── content/sealed/             # the ten real adventures, AES-256-GCM
+├── content/source/             # gitignored plaintext working copies
+├── scripts/{seal,unseal}.js    # encrypt for commit / recover from ciphertext
+├── __tests__/                  # 117 Vitest specs (real handlers, file store)
+├── e2e/game.spec.js            # Playwright multi-browser full game
+├── dev-server.js               # local static + api host on :3400
+└── .github/workflows/ci.yml    # test gate → prebuilt production deploy</pre>
+  </section>
+</main>
+<script>
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'day' ? 'night' : 'day';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('escape:theme', next);
+  });
+</script>
+</body>
+</html>

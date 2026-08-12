@@ -1,0 +1,11 @@
+node_modules/
+.vercel/
+.env*
+test-results/
+playwright-report/
+.vercel
+
+# Plaintext adventure content — the author's working copy. Committed only as
+# ciphertext in content/sealed/. Back this directory up outside the repo;
+# `npm run unseal` can also rebuild it from the sealed files plus the key.
+content/source/

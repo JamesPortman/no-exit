@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="nightsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a3a5e" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a2438" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="mahogany" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7a4a30" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#4e2c1a" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="curtain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a2f3c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#5e1e28" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="lampglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gem" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#cfe4ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#5b8dd9" stop-opacity="0.35"/>
+    </radialGradient>
+  </defs>
+
+  <!-- carriage window, mahogany frame -->
+  <g transform="translate(140 90)">
+    <rect x="-18" y="-18" width="436" height="316" rx="26" fill="none" stroke="url(#mahogany)" stroke-width="22"/>
+    <rect x="0" y="0" width="400" height="280" rx="14" fill="url(#nightsky)"/>
+    <!-- passing landscape -->
+    <circle cx="310" cy="70" r="30" fill="#e8ecf4" fill-opacity="0.4"/>
+    <path d="M0 200 q70 -46 140 0 q70 -46 140 0 q60 -40 120 0 V280 H0 Z" fill="#22303e" fill-opacity="0.45"/>
+    <path d="M40 200 v-56 M40 148 h30 M180 206 v-64 M180 146 h30" stroke="#3a4552" stroke-opacity="0.5" stroke-width="4" fill="none"/>
+    <!-- motion streaks -->
+    <path d="M20 90 h70 M120 118 h96 M250 96 h60" stroke="#8a93a5" stroke-opacity="0.25" stroke-width="3"/>
+    <!-- curtains -->
+    <path d="M-8 -12 q56 120 10 296 L-16 288 V-14 Z" fill="url(#curtain)"/>
+    <path d="M408 -12 q-56 120 -10 296 L416 288 V-14 Z" fill="url(#curtain)"/>
+    <path d="M-4 150 q26 12 22 40 M404 150 q-26 12 -22 40" stroke="#e8c883" stroke-opacity="0.4" stroke-width="4" fill="none"/>
+  </g>
+
+  <!-- wall lamp with glow -->
+  <g transform="translate(700 150)">
+    <circle cx="0" cy="0" r="90" fill="url(#lampglow)"/>
+    <path d="M0 46 q-20 0 -16 -34 q4 -26 16 -26 q12 0 16 26 q4 34 -16 34 Z" fill="#ffd98a" fill-opacity="0.5"/>
+    <path d="M0 46 v18 M-14 64 h28" stroke="#b98f3e" stroke-opacity="0.5" stroke-width="4" fill="none"/>
+  </g>
+
+  <!-- the jewel on its stand, sparkling -->
+  <g transform="translate(940 330)">
+    <path d="M0 -34 L30 -8 L18 30 L-18 30 L-30 -8 Z" fill="url(#gem)"/>
+    <path d="M0 -34 L0 30 M-30 -8 L30 -8" stroke="#cfe4ff" stroke-opacity="0.4" stroke-width="2"/>
+    <path d="M-46 -50 l10 10 M46 -50 l-10 10 M0 -62 v14" stroke="#cfe4ff" stroke-opacity="0.55" stroke-width="3"/>
+    <path d="M-34 44 h68 M-24 44 l-8 36 h64 l-8 -36" stroke="#b98f3e" stroke-opacity="0.5" stroke-width="4" fill="none"/>
+  </g>
+
+  <!-- violin resting against the banquette -->
+  <g transform="translate(1080 560) rotate(16)" fill="#7a4a30" fill-opacity="0.45">
+    <path d="M0 0 c-40 10 -40 62 -8 70 c-36 14 -26 74 12 72 c38 2 48 -58 12 -72 c32 -8 32 -60 -16 -70 Z"/>
+    <path d="M-2 -6 l6 0 l0 -104 l-6 0 Z"/>
+    <path d="M-12 -112 h26 v10 h-26 Z"/>
+    <path d="M-6 34 q6 10 12 0 M-6 74 q6 10 12 0" stroke="#e8c883" stroke-opacity="0.5" stroke-width="3" fill="none"/>
+  </g>
+
+  <!-- rails and sleepers -->
+  <g stroke-width="5" fill="none">
+    <path d="M0 716 H1200" stroke="#8a93a5" stroke-opacity="0.35"/>
+    <path d="M0 756 H1200" stroke="#8a93a5" stroke-opacity="0.3"/>
+    <path d="M60 716 v40 M180 716 v40 M300 716 v40 M420 716 v40 M540 716 v40 M660 716 v40 M780 716 v40 M900 716 v40 M1020 716 v40 M1140 716 v40" stroke="#6e5a3a" stroke-opacity="0.35"/>
+  </g>
+
+  <!-- steam drifting -->
+  <g fill="#c8ccd6">
+    <circle cx="520" cy="620" r="30" fill-opacity="0.14"/>
+    <circle cx="580" cy="590" r="22" fill-opacity="0.12"/>
+    <circle cx="628" cy="568" r="15" fill-opacity="0.1"/>
+  </g>
+</svg>

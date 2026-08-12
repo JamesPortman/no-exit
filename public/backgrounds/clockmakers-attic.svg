@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="brasswork" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8c883" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#9a7328" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="dialface" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#efe6cf" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d8c9a3" stop-opacity="0.25"/>
+    </radialGradient>
+    <radialGradient id="lampwarm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beamwood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6e5238" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4a3520" stop-opacity="0.45"/>
+    </linearGradient>
+  </defs>
+
+  <!-- warm lamplight -->
+  <circle cx="600" cy="420" r="380" fill="url(#lampwarm)"/>
+
+  <!-- roof beams -->
+  <path d="M0 240 L600 30 L1200 240" fill="none" stroke="url(#beamwood)" stroke-width="26"/>
+  <path d="M300 135 V800 M900 135 V800" stroke="url(#beamwood)" stroke-width="18"/>
+
+  <!-- hanging clock faces at drunken angles -->
+  <g>
+    <g transform="translate(180 320)">
+      <path d="M0 -170 V-64" stroke="#8a93a5" stroke-opacity="0.4" stroke-width="3"/>
+      <circle r="64" fill="url(#dialface)" stroke="url(#brasswork)" stroke-width="8"/>
+      <path d="M0 0 L0 -38 M0 0 L26 12" stroke="#4a3520" stroke-opacity="0.7" stroke-width="4"/>
+      <path d="M0 -52 v8 M52 0 h-8 M0 52 v-8 M-52 0 h8" stroke="#4a3520" stroke-opacity="0.5" stroke-width="3"/>
+    </g>
+    <g transform="translate(430 240) rotate(-14)">
+      <path d="M0 -140 V-50" stroke="#8a93a5" stroke-opacity="0.4" stroke-width="3"/>
+      <circle r="50" fill="url(#dialface)" stroke="url(#brasswork)" stroke-width="7"/>
+      <path d="M0 0 L0 -28 M0 0 L18 -12" stroke="#4a3520" stroke-opacity="0.7" stroke-width="3.5"/>
+    </g>
+    <g transform="translate(1040 300) rotate(10)">
+      <path d="M0 -160 V-58" stroke="#8a93a5" stroke-opacity="0.4" stroke-width="3"/>
+      <circle r="58" fill="url(#dialface)" stroke="url(#brasswork)" stroke-width="8"/>
+      <path d="M0 0 L-22 -22 M0 0 L14 26" stroke="#4a3520" stroke-opacity="0.7" stroke-width="4"/>
+    </g>
+  </g>
+
+  <!-- longcase clock, right -->
+  <g transform="translate(790 560)">
+    <rect x="-64" y="-220" width="128" height="440" rx="10" fill="url(#beamwood)"/>
+    <circle cy="-140" r="46" fill="url(#dialface)" stroke="url(#brasswork)" stroke-width="6"/>
+    <path d="M0 -140 L0 -168 M0 -140 L20 -128" stroke="#4a3520" stroke-opacity="0.7" stroke-width="4"/>
+    <rect x="-30" y="-60" width="60" height="180" rx="6" fill="#181a20" fill-opacity="0.35"/>
+    <path d="M0 -50 V60" stroke="url(#brasswork)" stroke-width="4"/>
+    <circle cy="78" r="22" fill="url(#brasswork)"/>
+  </g>
+
+  <!-- big meshing gears, lower left -->
+  <g fill="none" stroke="url(#brasswork)" stroke-width="8">
+    <g transform="translate(220 640)">
+      <circle r="70"/>
+      <circle r="16" fill="#9a7328" fill-opacity="0.4" stroke="none"/>
+      <path d="M0 -82 v-18 M58 -58 l13 -13 M82 0 h18 M58 58 l13 13 M0 82 v18 M-58 58 l-13 13 M-82 0 h-18 M-58 -58 l-13 -13"/>
+    </g>
+    <g transform="translate(370 700)" stroke-width="6">
+      <circle r="42"/>
+      <circle r="10" fill="#9a7328" fill-opacity="0.4" stroke="none"/>
+      <path d="M0 -52 v-12 M37 -37 l9 -9 M52 0 h12 M37 37 l9 9 M0 52 v12 M-37 37 l-9 9 M-52 0 h-12 M-37 -37 l-9 -9"/>
+    </g>
+  </g>
+
+  <!-- scattered pocket watches and a winding key -->
+  <g transform="translate(560 690)">
+    <circle r="30" fill="url(#dialface)" stroke="url(#brasswork)" stroke-width="5"/>
+    <path d="M0 0 L0 -17 M0 0 L11 7" stroke="#4a3520" stroke-opacity="0.7" stroke-width="3"/>
+    <path d="M0 -36 q0 -14 14 -12" stroke="url(#brasswork)" stroke-width="4" fill="none"/>
+  </g>
+  <g transform="translate(650 730) rotate(24)" stroke="url(#brasswork)" stroke-width="6" fill="none">
+    <circle r="14"/>
+    <path d="M12 8 L54 34 M44 28 l-7 12 M54 34 l-7 12"/>
+  </g>
+
+  <!-- drifting motes -->
+  <g fill="#ffd98a">
+    <circle cx="520" cy="180" r="2.5" fill-opacity="0.35"/>
+    <circle cx="680" cy="300" r="2" fill-opacity="0.3"/>
+    <circle cx="940" cy="480" r="2" fill-opacity="0.25"/>
+    <circle cx="120" cy="480" r="2" fill-opacity="0.25"/>
+  </g>
+</svg>
