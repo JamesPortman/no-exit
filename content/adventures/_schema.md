@@ -54,7 +54,7 @@ module.exports = {
 };
 ```
 
-## Design targets for a 50-minute adventure
+## Design targets for a 30-minute adventure
 
 - 10 puzzles: nine token puzzles then the meta. Ramp from a warm-up
   riddle (2–3 min) through mid-difficulty ciphers and logic to the hardest
