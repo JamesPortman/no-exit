@@ -6,6 +6,7 @@ const {
   appendLog, sendJSON, requirePlayer,
 } = require('./_lib/games.js');
 const { rateLimitKey } = require('./_lib/ratelimit.js');
+const { recordSoloScore } = require('./_lib/db.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
@@ -52,6 +53,9 @@ module.exports = async (req, res) => {
       meta.state = 'finished';
       meta.endedAt = Date.now();
       await saveGame(meta);
+      // The board is written from the game record, never from the client —
+      // otherwise anyone could post whatever time they fancied.
+      await recordSoloScore(meta);
     }
     return sendJSON(res, 200, {
       correct: true,

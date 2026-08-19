@@ -21,17 +21,44 @@ function showBest() {
   $('solo-best').textContent = t('solo.best', fmtMs(best.ms), best.solved, best.total);
 }
 
-document.addEventListener('langchange', showBest);
+// The board is a nicety: if it cannot be reached, the page still plays.
+async function showBoard() {
+  try {
+    const { scores } = await api('/api/leaderboard');
+    const me = (localStorage.getItem('escape:solo:name') || '').trim().toLowerCase();
+    $('solo-board').innerHTML = scores.length
+      ? scores.map((r, i) => `
+        <div class="rank-row ${String(r.player_name).trim().toLowerCase() === me && me ? 'first' : ''}">
+          <div class="rank-pos">${i === 0 ? '🏆' : i + 1}</div>
+          <div>
+            <strong>${esc(r.player_name)}</strong> — ${fmtMs(Number(r.finish_ms))}
+            <div class="rank-detail">
+              ${t('play.puzzlesCount', r.puzzles_solved, r.total_puzzles)} · ${esc(r.room)}
+            </div>
+          </div>
+        </div>`).join('')
+      : `<p class="muted small">${t('solo.boardEmpty')}</p>`;
+  } catch {
+    $('solo-board').innerHTML = '';
+  }
+}
+
+$('solo-name').value = localStorage.getItem('escape:solo:name') || '';
+
+document.addEventListener('langchange', () => { showBest(); showBoard(); });
 showBest();
+showBoard();
 
 $('solo-start').addEventListener('click', async () => {
   $('solo-start').disabled = true;
   $('solo-error').textContent = '';
   try {
-    const run = await api('/api/solo', { name: $('solo-name').value.trim() || undefined });
+    const chosen = $('solo-name').value.trim();
+    // Remembered so the board can highlight this player's own row.
+    if (chosen) localStorage.setItem('escape:solo:name', chosen);
+    const run = await api('/api/solo', { name: chosen || undefined });
     // play.js boots from this session; without it the page bounces to /join.
-    saveSession({ code: run.code, playerId: run.playerId, token: run.token,
-                  name: $('solo-name').value.trim() });
+    saveSession({ code: run.code, playerId: run.playerId, token: run.token, name: chosen });
     location.assign(`/play.html?code=${run.code}`);
   } catch (e) {
     $('solo-error').textContent = e.message;

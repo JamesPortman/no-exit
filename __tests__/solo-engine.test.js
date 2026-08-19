@@ -107,3 +107,69 @@ describe('solo runs', () => {
     expect(JSON.stringify(again.body)).not.toContain(run.meta.soloSeed);
   });
 });
+
+// The board is public and written server-side. Tests run without a database,
+// so the DB calls no-op — what is verified here is the shaping, the guards,
+// and the ranking rule, which is deliberately a pure function.
+describe('the solo leaderboard', () => {
+  const leaderboard = require('../api/leaderboard.js');
+  const { bestPerPlayer, recordSoloScore } = require('../api/_lib/db.js');
+
+  it('keeps one entry per player — their fastest — regardless of case', () => {
+    const rows = [
+      { player_name: 'Ada', finish_ms: 500 },
+      { player_name: 'ada', finish_ms: 300 },   // same player, better run
+      { player_name: 'Bo', finish_ms: 420 },
+      { player_name: 'Cy', finish_ms: 900 },
+    ];
+    const board = bestPerPlayer(rows);
+    expect(board.map((r) => `${r.player_name}:${r.finish_ms}`))
+      .toEqual(['ada:300', 'Bo:420', 'Cy:900']);
+  });
+
+  it('honours the limit', () => {
+    const rows = Array.from({ length: 40 }, (_, i) => ({ player_name: `p${i}`, finish_ms: i }));
+    expect(bestPerPlayer(rows, 5)).toHaveLength(5);
+  });
+
+  it('reads publicly and degrades to empty with no database', async () => {
+    const r = await get(leaderboard, {});
+    expect(r.statusCode).toBe(200);
+    expect(r.body.scores).toEqual([]);
+  });
+
+  it('only lets the host remove an entry', async () => {
+    const prev = process.env.ADMIN_TOKEN;
+    try {
+      process.env.ADMIN_TOKEN = 'secret-key';
+      expect((await call(leaderboard, { body: { id: 1 } })).statusCode).toBe(403);
+      expect((await call(leaderboard, { body: { adminToken: 'wrong', id: 1 } })).statusCode).toBe(403);
+      expect((await call(leaderboard, { body: { adminToken: 'secret-key' } })).statusCode).toBe(400);
+      const ok = await call(leaderboard, { body: { adminToken: 'secret-key', id: 1 } });
+      expect(ok.statusCode).toBe(200);
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_TOKEN;
+      else process.env.ADMIN_TOKEN = prev;
+    }
+  });
+
+  it('claims the write once, so a replay cannot double-post a score', async () => {
+    const run = await soloRun();
+    const { loadGame } = require('../api/_lib/games.js');
+    let meta = await loadGame(run.code);
+    await recordSoloScore(meta);
+    meta = await loadGame(run.code);
+    expect(meta.soloRecorded).toBe(true);
+  });
+
+  it('records a finished run exactly once', async () => {
+    const run = await soloRun();
+    await solveEverything(run);
+    const { loadGame } = require('../api/_lib/games.js');
+    const meta = await loadGame(run.code);
+    // Finishing goes through answer.js, which claims the write.
+    expect(meta.soloRecorded).toBe(true);
+    // ...and still never touches the shared event history.
+    expect(meta.resultsWritten).toBeFalsy();
+  });
+});
