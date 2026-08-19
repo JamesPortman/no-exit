@@ -62,6 +62,7 @@ module.exports = async (req, res) => {
     elapsedMs: elapsed,
     remainingMs: Math.max(0, meta.durationMs - elapsed),
     serverNow: now,
+    solo: meta.mode === 'solo',
     broadcast: meta.broadcast,
     teams: roster,
   };

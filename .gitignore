@@ -9,3 +9,8 @@ playwright-report/
 # ciphertext in content/sealed/. Back this directory up outside the repo;
 # `npm run unseal` can also rebuild it from the sealed files plus the key.
 content/source/
+
+# Plaintext riddle bank for generated Solo runs — the author's working copy.
+# Committed only as ciphertext in content/solo/riddles.enc. `npm run unseal`
+# rebuilds it from the sealed file plus the key.
+content/solo-source/

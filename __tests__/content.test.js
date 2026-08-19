@@ -7,6 +7,7 @@
 // A clone without the key still runs everything against the plaintext
 // fixture; the meta-chain suites below skip rather than fail.
 import { describe, it, expect } from 'vitest';
+import { assertAdventureSchema, assertNoAnswerLeaks, assertMediaExists } from './schema.js';
 const fs = require('fs');
 const path = require('path');
 const { listAdventures, getAdventure } = require('../api/_lib/content.js');
@@ -75,28 +76,7 @@ describe('sealed content', () => {
 describe.each(Object.entries(ADVENTURES))('adventure %s', (key, adv) => {
   it('conforms to the schema', () => {
     expect(adv.slug).toBe(key);
-    expect(adv.title).toBeTruthy();
-    expect(adv.intro).toBeTruthy();
-    expect(adv.durationMin).toBeGreaterThan(0);
-    expect(adv.puzzles.length).toBeGreaterThan(0);
-
-    const ids = adv.puzzles.map((p) => p.id);
-    expect(new Set(ids).size).toBe(ids.length);
-
-    for (const p of adv.puzzles) {
-      expect(p.title, p.id).toBeTruthy();
-      expect(p.prompt, p.id).toBeTruthy();
-      expect(p.solveMessage, p.id).toBeTruthy();
-      // Every puzzle must be answerable.
-      expect((p.answers || []).length > 0 || p.answerPattern, p.id).toBeTruthy();
-      for (const a of p.answers || []) {
-        expect(checkAnswer(p, a), `${p.id} answer "${a}" fails its own check`).toBe(true);
-      }
-      for (const h of p.hints || []) {
-        expect(h.text, p.id).toBeTruthy();
-        expect(h.penaltySec, p.id).toBeGreaterThan(0);
-      }
-    }
+    assertAdventureSchema(adv, key);
   });
 
   it('playable adventures are ten puzzles long', () => {
@@ -113,31 +93,11 @@ describe.each(Object.entries(ADVENTURES))('adventure %s', (key, adv) => {
   });
 
   it('no puzzle gives its own answer away in the prompt or hints', () => {
-    for (const p of adv.puzzles) {
-      // Multiple-choice puzzles must print their answer among the options;
-      // they opt out explicitly rather than being contorted around the test.
-      if (p.answerInPrompt) continue;
-      const surface = `${p.prompt} ${(p.hints || []).map((h) => h.text).join(' ')}`
-        .toLowerCase();
-      for (const a of p.answers || []) {
-        // Only guard distinctive answers; short ones ("c", "32") appear
-        // legitimately inside prompts as puzzle data.
-        if (a.length < 5) continue;
-        // Whole-word match, so a prompt may say "shorter" when the answer
-        // is "short" — the giveaway is the word itself, not a substring.
-        const word = new RegExp(`\\b${a.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-        expect(word.test(surface), `${p.id} leaks "${a}"`).toBe(false);
-      }
-    }
+    assertNoAnswerLeaks(adv, key);
   });
 
   it('media files exist on disk', () => {
-    for (const p of adv.puzzles) {
-      for (const m of p.media || []) {
-        const file = path.join(__dirname, '..', 'public', m);
-        expect(fs.existsSync(file), `${p.id}: missing ${m}`).toBe(true);
-      }
-    }
+    assertMediaExists(adv);
   });
 });
 

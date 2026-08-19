@@ -134,6 +134,11 @@ function rankTeams(meta, teamStates, adventure) {
 // override applies everywhere at once. Returns a copy — never mutates the
 // cached content module.
 function adventureFor(meta) {
+  // A Solo run's adventure was generated at creation and stored on the game
+  // record, so there is no slug to resolve. Return it before the puzzleCount
+  // slice below — solo sets puzzleCount to its own length, and a shortened
+  // solo run would drop the finale the whole run builds toward.
+  if (meta.mode === 'solo' && meta.soloAdventure) return meta.soloAdventure;
   const adv = getAdventure(meta.adventureSlug);
   if (!adv) throw new Error(`adventure ${meta.adventureSlug} missing`);
   const n = meta.puzzleCount;

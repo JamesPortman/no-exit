@@ -6,6 +6,8 @@ const state = require('../api/state.js');
 const answer = require('../api/answer.js');
 const hint = require('../api/hint.js');
 const host = require('../api/host.js');
+const solo = require('../api/solo.js');
+const lookup = require('../api/lookup.js');
 
 function mockRes() {
   const r = { statusCode: null, body: null };
@@ -41,7 +43,17 @@ const playerState = (code, p) =>
   get(state, { code, playerId: p.playerId, token: p.token });
 const hostState = (code, hostToken) => get(state, { code, hostToken });
 
+// Start a Solo run and hand back everything needed to play it, including
+// the generated adventure (read from the game record, exactly as the server
+// does) so a test can supply real answers.
+async function soloRun(body = {}) {
+  const made = await call(solo, { body });
+  const { loadGame } = require('../api/_lib/games.js');
+  const meta = await loadGame(made.body.code);
+  return { ...made.body, adventure: meta.soloAdventure, meta, res: made };
+}
+
 module.exports = {
-  create, join, state, answer, hint, host,
+  create, join, state, answer, hint, host, solo, lookup, soloRun,
   call, get, mockRes, startedGame, playerState, hostState,
 };

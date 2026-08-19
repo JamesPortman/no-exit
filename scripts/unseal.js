@@ -43,4 +43,16 @@ for (const file of fs.readdirSync(SEALED_DIR).filter((f) => f.endsWith('.enc')))
   console.log(`recovered ${slug}`);
 }
 
+// Mirror of seal.js's riddle-bank pass.
+const BANK_ENC = path.join(ROOT, 'content', 'solo', 'riddles.enc');
+const BANK_OUT = path.join(ROOT, 'content', 'solo-source', 'riddles.js');
+if (fs.existsSync(BANK_ENC) && (!fs.existsSync(BANK_OUT) || force)) {
+  const bank = JSON.parse(decrypt(fs.readFileSync(BANK_ENC, 'utf8').trim(), key));
+  fs.mkdirSync(path.dirname(BANK_OUT), { recursive: true });
+  fs.writeFileSync(BANK_OUT,
+    '// Recovered from sealed content. Edit here, then run `npm run seal`.\n' +
+    `module.exports = ${JSON.stringify(bank, null, 2)};\n`);
+  console.log(`recovered the solo riddle bank (${bank.riddles.length} riddles)`);
+}
+
 console.log(`\n${written} adventure(s) written to content/source/`);

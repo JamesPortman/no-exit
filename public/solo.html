@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>No Exit — Solo</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-bg="default">
+  <div class="chrome-bar">
+    <select id="lang-select" aria-label="Language"></select>
+    <button id="theme-btn" type="button">☀️</button>
+  </div>
+  <div class="wrap">
+    <h1>🔐 No <span class="accent">Exit</span></h1>
+
+    <div class="card">
+      <h2 data-i18n="solo.title">Play solo</h2>
+      <p class="muted" data-i18n="solo.desc">A room built for you on the spot — a
+        different one every time. Six puzzles and a way out, in about fifteen
+        minutes. No host, no team, no waiting.</p>
+
+      <label for="solo-name" data-i18n="solo.nameLabel">Your name (optional)</label>
+      <input type="text" id="solo-name" maxlength="24" autocomplete="off">
+
+      <p class="muted small" id="solo-best" hidden></p>
+
+      <button id="solo-start" data-i18n="solo.start">Start a run</button>
+      <div class="error" id="solo-error"></div>
+      <p class="muted small" data-i18n="solo.clockNote">The clock starts when you press the button.</p>
+    </div>
+
+    <p class="muted small" style="text-align:center">
+      <a href="/" style="color:var(--muted)" data-i18n="solo.backHome">← hosted games</a>
+    </p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/solo.js"></script>
+</body>
+</html>

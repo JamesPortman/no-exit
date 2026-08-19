@@ -12,13 +12,19 @@ locally), results history in Neon Postgres. Clients poll `/api/state` every
 
 ## Layout
 
-- `api/` — serverless endpoints: `config`, `create`, `join`, `state`,
+- `api/` — serverless endpoints: `config`, `create`, `solo`, `join`, `state`,
   `answer`, `hint`, `host`
 - `api/_lib/` — `store.js` (KV), `games.js` (engine), `content.js`
   (adventure loader + anti-spoiler sanitizer), `ratelimit.js`
 - `content/adventures/` — plaintext fixtures only (`test-adventure`,
   `test-long`). They document the format and keep the engine testable in a
   clone with no key. See `content/adventures/_schema.md` to author one.
+- `api/_lib/solo/` — the Solo generator: a pure function of a seed that
+  builds a themed, seven-puzzle room on demand. See `/architecture`.
+- `content/solo/riddles.enc` — sealed bank of 80 riddles used by Solo when a
+  key is present; without one the generator substitutes an anagram, so a
+  keyless clone still plays. Plaintext working copy lives in the gitignored
+  `content/solo-source/`.
 - `content/sealed/*.enc` — the ten real adventures, AES-256-GCM encrypted.
   This repository is public, so puzzle answers, hints and solve messages are
   committed only as ciphertext. Playing needs `ADVENTURE_KEY`; without it the

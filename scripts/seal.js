@@ -61,4 +61,22 @@ for (const f of fs.readdirSync(SEALED_DIR).filter((f) => f.endsWith('.enc'))) {
   }
 }
 
+// The Solo riddle bank is not an adventure — everything in content/sealed/
+// is loaded as one, so it lives in its own pair of directories. Guarded, so
+// a machine without the bank still runs `npm run seal` cleanly.
+const BANK_SRC = path.join(ROOT, 'content', 'solo-source', 'riddles.js');
+const BANK_OUT_DIR = path.join(ROOT, 'content', 'solo');
+if (fs.existsSync(BANK_SRC)) {
+  delete require.cache[require.resolve(BANK_SRC)];
+  const bank = require(BANK_SRC);
+  if (!Array.isArray(bank.riddles) || !bank.riddles.length) {
+    console.error('content/solo-source/riddles.js exports no riddles');
+    process.exit(1);
+  }
+  fs.mkdirSync(BANK_OUT_DIR, { recursive: true });
+  fs.writeFileSync(path.join(BANK_OUT_DIR, 'riddles.enc'),
+    encrypt(JSON.stringify({ riddles: bank.riddles }), key) + '\n');
+  console.log(`sealed the solo riddle bank (${bank.riddles.length} riddles)`);
+}
+
 console.log(`\n${sealed} adventure(s) sealed into content/sealed/`);

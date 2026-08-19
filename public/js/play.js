@@ -72,13 +72,60 @@ function renderRanking(ranking) {
     </div>`).join('');
 }
 
+// A solo run's time is kept only in this browser. There is no solo
+// leaderboard by design: every run is generated for that player, so times
+// are not comparable between people — only against your own last attempt.
+const SOLO_BEST_KEY = 'escape:solo:best';
+const soloBest = () => {
+  try { return JSON.parse(localStorage.getItem(SOLO_BEST_KEY)); } catch { return null; }
+};
+
+// Rendered once, not on every poll: the best is saved on the first pass, so
+// recomputing two seconds later would decide the run is no longer a record
+// and replace the congratulation with a flat restatement of the same time.
+let soloResultShown = false;
+
+function renderSoloResult(s) {
+  if (soloResultShown) return;
+  soloResultShown = true;
+  const r = (s.ranking && s.ranking[0]) || {};
+  const escaped = Boolean(r.finished);
+  const prev = soloBest();
+  const isNewBest = escaped && (!prev || !prev.ms || r.adjustedMs < prev.ms);
+  if (isNewBest) {
+    localStorage.setItem(SOLO_BEST_KEY, JSON.stringify({
+      ms: r.adjustedMs, solved: r.solved, total: r.totalPuzzles,
+    }));
+  }
+  const best = soloBest();
+  $('ranking').innerHTML = `
+    <div class="rank-row first">
+      <div class="rank-pos">${escaped ? '🏆' : '⏱'}</div>
+      <div>
+        <strong>${escaped
+          ? t('solo.escaped', fmtMs(r.adjustedMs))
+          : t('solo.ranOut', r.solved || 0, r.totalPuzzles || 0)}</strong>
+        <div class="rank-detail">
+          ${t('play.puzzlesCount', r.solved || 0, r.totalPuzzles || 0)}
+          ${r.penaltyMs ? ` ${t('play.inclPenalties', fmtMs(r.penaltyMs))}` : ''}
+        </div>
+      </div>
+    </div>
+    ${isNewBest ? `<p class="accent" style="text-align:center">${t('solo.newBest')}</p>` : ''}
+    ${!isNewBest && best && best.ms
+      ? `<p class="muted small" style="text-align:center">${t('solo.toBeat', fmtMs(best.ms))}</p>` : ''}
+    <p style="text-align:center;margin-top:14px">
+      <a href="/solo.html" style="color:var(--accent)">${t('solo.again')}</a></p>`;
+}
+
 function render(s) {
   timer.update(s);
   setBackground(s.adventure.slug);
   $('adventure-title').textContent = advText(s.adventure, 'title');
-  $('team-name').textContent = s.you.teamName;
+  $('team-name').textContent = s.solo ? s.you.name : s.you.teamName;
 
-  const b = s.broadcast;
+  // Nobody is hosting a solo run, so the broadcast banner is dead chrome.
+  const b = s.solo ? null : s.broadcast;
   $('broadcast').classList.toggle('hidden', !b || Date.now() - b.at > 60_000);
   if (b) {
     $('broadcast').textContent = `📢 ${b.msg}`;
@@ -101,7 +148,7 @@ function render(s) {
   if (s.state === 'paused') return show('paused');
   if (s.state === 'finished') {
     show('finished');
-    renderRanking(s.ranking);
+    if (s.solo) renderSoloResult(s); else renderRanking(s.ranking);
     if (!firstRender && !gameOverCelebrated) {
       gameOverCelebrated = true;
       if (s.ranking[0]?.teamId === s.you.teamId) {

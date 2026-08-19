@@ -2,7 +2,7 @@
 // the puzzleId in the request guards against double-advance when two
 // teammates submit at the same moment.
 const {
-  loadTeam, saveTeam, elapsedMs, maybeExpire, checkAnswer, adventureFor,
+  loadTeam, saveTeam, saveGame, elapsedMs, maybeExpire, checkAnswer, adventureFor,
   appendLog, sendJSON, requirePlayer,
 } = require('./_lib/games.js');
 const { rateLimitKey } = require('./_lib/ratelimit.js');
@@ -44,6 +44,15 @@ module.exports = async (req, res) => {
       type: 'solve', teamId: player.teamId, name: player.name,
       puzzleId: current.id, puzzleTitle: current.title, atMs, finished,
     });
+    // Nobody is hosting a solo run, so finishing the last puzzle has to end
+    // the game itself — otherwise the player waits out the clock on a screen
+    // meant for teams still playing. endedAt matters: elapsedMs reads it once
+    // finished, and leaving it unset makes every derived time NaN.
+    if (finished && meta.mode === 'solo') {
+      meta.state = 'finished';
+      meta.endedAt = Date.now();
+      await saveGame(meta);
+    }
     return sendJSON(res, 200, {
       correct: true,
       solveMessage: current.solveMessage || '',

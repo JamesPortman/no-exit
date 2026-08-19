@@ -33,6 +33,9 @@ function sql() {
 // duplicates it. Fixture/test adventures (hidden: true) are never recorded.
 async function recordResultsOnce(meta) {
   if (meta.state !== 'finished' || meta.resultsWritten) return;
+  // Solo runs are a private personal best, kept in the player's own browser.
+  // Recording them here would bury real event history under public traffic.
+  if (meta.mode === 'solo') return;
   meta.resultsWritten = true;
   await saveGame(meta);
 

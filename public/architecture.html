@@ -185,10 +185,15 @@
     </div>
     <ul class="notes">
       <li>Everything a player sees is a static file; all game logic lives in
-        eight functions: <code>config</code>, <code>lookup</code>,
-        <code>create</code>, <code>join</code>, <code>state</code>,
-        <code>answer</code>, <code>hint</code>, <code>host</code>
-        (+ <code>history</code>).</li>
+        nine functions: <code>config</code>, <code>lookup</code>,
+        <code>create</code>, <code>solo</code>, <code>join</code>,
+        <code>state</code>, <code>answer</code>, <code>hint</code>,
+        <code>host</code> (+ <code>history</code>).</li>
+      <li><code>solo</code> is the only ungated endpoint: it starts a
+        single-player run with no host key, so it is deliberately a separate
+        file rather than a branch inside the ADMIN-gated <code>create</code>.
+        Its puzzles are generated at that moment and stored on the game
+        record — see Solo mode below.</li>
       <li>Both roles poll <code>/api/state</code> every 2 seconds. State
         changes are minute-scale, so polling beats websocket complexity at
         this size — a lesson inherited directly from Terra Incognita's live
@@ -258,7 +263,7 @@
     <h2>3 · Data model</h2>
     <table class="plain keys">
       <tr><th>Redis key</th><th>Contents</th></tr>
-      <tr><td>game:CODE</td><td>Meta: state, <code>startAt</code>/<code>pausedAt</code>/<code>pauseAccumMs</code>/<code>endedAt</code>, duration, teams, <code>hostToken</code>, broadcast, <code>resultsWritten</code> flag. Codes are 4 chars from an alphabet without 0/1/I/L/O.</td></tr>
+      <tr><td>game:CODE</td><td>Meta: state, <code>startAt</code>/<code>pausedAt</code>/<code>pauseAccumMs</code>/<code>endedAt</code>, duration, teams, <code>hostToken</code>, broadcast, <code>resultsWritten</code> flag. Solo runs add <code>mode:'solo'</code>, <code>soloSeed</code> and the whole generated <code>soloAdventure</code> (~10&nbsp;KB). Codes are 4 chars from an alphabet without 0/1/I/L/O.</td></tr>
       <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs}</code>. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
       <tr><td>game:CODE:team:ID</td><td>Per-team progress: <code>puzzleIdx</code>, solves (with elapsed-ms stamps), <code>hintsTaken</code> per puzzle, <code>penaltyMs</code>, <code>wrongCount</code>, <code>finishedAtMs</code>.</td></tr>
       <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, host actions), capped at 200 entries.</td></tr>
@@ -436,6 +441,66 @@
       absent locally — file store + skipped history writes keep every feature
       testable offline.
     </p>
+  </section>
+
+  <section>
+    <h2>Solo mode · generated rooms</h2>
+    <p class="lede">
+      Solo is a public, single-player run whose puzzles are built on the spot,
+      so a visitor can try the format without organising an event — and
+      without spending any authored content.
+    </p>
+    <div class="cards cols2">
+      <div class="card">
+        <div class="title">Generated, then frozen</div>
+        <p><code>api/_lib/solo/generate.js</code> is a pure function of a seed:
+        no <code>Math.random</code>, no clock, no I/O beyond the memoised
+        riddle bank. It runs <em>once</em>, in <code>api/solo.js</code>, and the
+        finished adventure is stored on the game record. Regenerating per
+        request would be wasted work and, worse, a mid-deploy generator change
+        would swap puzzle ids under a live player — which silently blanks the
+        solved history the finale depends on.</p>
+      </div>
+      <div class="card">
+        <div class="title">The seed never leaves the server</div>
+        <p>The generator is public, so a leaked seed is a full answer key. The
+        client-facing slug is the constant <code>solo</code>, puzzle ids are
+        literal <code>p1…p7</code>, and visuals are inline SVG rather than
+        files whose names could give something away. A fixed seed can be
+        supplied by the environment for tests, but only where
+        <code>VERCEL_ENV</code> is unset — never in production, and never from
+        a request.</p>
+      </div>
+      <div class="card">
+        <div class="title">Themed, not assorted</div>
+        <p>Each run picks one of eight rooms — a drowned library, a night
+        market, a frozen station — which supplies the title, the missing
+        keeper, and the vocabulary every prompt and solve message is dressed
+        in. Underneath, six puzzles are drawn from ciphers, sequences, story
+        arithmetic, counting and chart-reading, each handing over a mark that
+        the finale consumes.</p>
+      </div>
+      <div class="card">
+        <div class="title">Riddles are optional by design</div>
+        <p>Classic riddles need human wit, so they come from a sealed bank of
+        80 (<code>content/solo/riddles.enc</code>) rather than being invented.
+        CI's E2E job runs with no <code>ADVENTURE_KEY</code>, so the generator
+        must produce a complete run with zero riddles — a self-contained
+        anagram stands in. Property tests cover both paths.</p>
+      </div>
+    </div>
+    <ul class="notes">
+      <li>Solo runs are never written to Postgres: a personal best lives in the
+        player's own browser. Public traffic would otherwise bury real event
+        history, and generated runs are not comparable between players anyway.</li>
+      <li>They are also private — <code>join</code> rejects them and
+        <code>lookup</code> reports them as missing, so a guessed code cannot
+        add company.</li>
+      <li>Finishing the last puzzle ends the run in <code>api/answer.js</code>,
+        setting <code>endedAt</code> as a host's <em>end</em> would. Without a
+        host nothing else would end it, and a missing <code>endedAt</code>
+        makes every derived time <code>NaN</code>.</li>
+    </ul>
   </section>
 
   <section>

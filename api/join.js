@@ -18,6 +18,9 @@ module.exports = async (req, res) => {
   const meta = await loadGame(code);
   if (!meta) return sendJSON(res, 404, { error: 'game not found — check the code' });
   if (meta.state === 'finished') return sendJSON(res, 400, { error: 'this game has ended' });
+  // Solo runs mint their one player at creation; anyone else with the code
+  // would otherwise be able to play along.
+  if (meta.mode === 'solo') return sendJSON(res, 400, { error: 'this is a solo game' });
   if (!name) return sendJSON(res, 400, { error: 'name required' });
   if (!meta.teams.some((t) => t.id === teamId)) {
     return sendJSON(res, 400, { error: 'pick a team' });

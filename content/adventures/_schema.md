@@ -70,3 +70,20 @@ module.exports = {
   away (90s penalty).
 - Every puzzle must be solvable on a phone screen — test media legibility at
   ~375px wide.
+
+## The Solo riddle bank
+
+Solo runs are generated, but classic riddles need a human, so they come from a
+bank rather than a generator.
+
+- Author in `content/solo-source/riddles.js` (**gitignored**), exporting
+  `{ riddles: [{ q, answers[], hints: [{text, penaltySec}, …] }] }`.
+- `npm run seal` encrypts it to `content/solo/riddles.enc`; `npm run unseal`
+  recovers it. Both are a second pass in the same commands.
+- It must NOT live under `content/source/` or `content/sealed/`: everything
+  there is loaded as an adventure, and a bank in either place breaks
+  `/api/config` and the content tests.
+- Riddles must be **theme-neutral** — the generator dresses them in whichever
+  room the run picked — and must never name a setting, character or prop.
+- Riddles are optional: CI runs the E2E suite with no key, so the generator has
+  to produce a complete run without them. Never make one structurally required.

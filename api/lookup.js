@@ -1,7 +1,6 @@
 // Public, minimal game lookup for the join page: title + team names only,
 // so a player with just the code can pick their team. No tokens, no puzzles.
-const { loadGame, sendJSON } = require('./_lib/games.js');
-const { getAdventure } = require('./_lib/content.js');
+const { loadGame, adventureFor, sendJSON } = require('./_lib/games.js');
 const { rateLimit } = require('./_lib/ratelimit.js');
 
 module.exports = async (req, res) => {
@@ -9,10 +8,12 @@ module.exports = async (req, res) => {
   const code = String(req.query.code || '').toUpperCase();
   const meta = await loadGame(code);
   if (!meta) return sendJSON(res, 404, { error: 'game not found — check the code' });
-  const adventure = getAdventure(meta.adventureSlug);
+  // Solo runs are not joinable, so the join page must not advertise them.
+  if (meta.mode === 'solo') return sendJSON(res, 404, { error: 'game not found — check the code' });
+  const adventure = adventureFor(meta);
   sendJSON(res, 200, {
     code,
-    title: adventure ? adventure.title : 'No Exit',
+    title: adventure?.title || 'No Exit',
     i18n: adventure?.i18n || null,
     state: meta.state,
     teams: meta.teams.map((t) => ({ id: t.id, name: t.name })),

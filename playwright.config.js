@@ -15,5 +15,9 @@ module.exports = defineConfig({
     command: 'node dev-server.js',
     url: 'http://localhost:3400',
     reuseExistingServer: !process.env.CI,
+    // A fixed seed so the solo spec can compute the answers to the run it is
+    // given. The server honours this only when VERCEL_ENV is unset, so it can
+    // never apply in production or preview.
+    env: { ...process.env, SOLO_TEST_SEED: 'e2e-solo-seed' },
   },
 });
