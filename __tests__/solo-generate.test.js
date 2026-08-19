@@ -11,7 +11,7 @@ const { checkAnswer } = require('../api/_lib/games.js');
 const { keyFromEnv } = require('../api/_lib/seal.js');
 
 // Bump deliberately when the generator changes on purpose.
-const EXPECTED_FINGERPRINT = '1a99c07ce294e861';
+const EXPECTED_FINGERPRINT = '1cc59e164412b312';
 
 const SEEDS = Array.from({ length: 200 }, (_, i) => `seed-${i}`);
 const MARK = /“mark — ([A-Z0-9]+)”/;
@@ -79,6 +79,28 @@ describe('solo generator', () => {
       expect(adv.puzzles).toHaveLength(TOKEN_PUZZLES + 1);
       assertAdventureSchema(adv, seed);
     }
+  });
+
+  it('never poses an ambiguous odd-one-out', () => {
+    const strip = (h) => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const asc = (w) => [...w].every((c, i, a) => i === 0 || a[i - 1] < c);
+    const dbl = (w) => /(.)\1/.test(w);
+    let checked = 0;
+    for (const seed of SEEDS) {
+      for (const p of generate(seed).puzzles) {
+        if (p.title !== 'The Labelled Row') continue;
+        checked += 1;
+        const words = strip(p.prompt).match(/\b[A-Z]{4,}\b/g) || [];
+        expect(words, seed).toHaveLength(8);
+        // Whichever rule is in play, exactly one word may break it, and it
+        // must be the accepted answer.
+        const rule = words.filter(asc).length >= 7 ? asc : dbl;
+        const breakers = words.filter((w) => !rule(w));
+        expect(breakers, `${seed}: ambiguous rule puzzle`).toHaveLength(1);
+        expect(breakers[0]).toBe(p.answers[0]);
+      }
+    }
+    expect(checked, 'no rule puzzles were generated at all').toBeGreaterThan(20);
   });
 
   it('stays small enough to live on the game record', () => {

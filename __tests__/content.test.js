@@ -125,6 +125,27 @@ describe.skipIf(!SEALED_AVAILABLE)('meta chains', () => {
     expect(checkAnswer(metaOf(adv), alias)).toBe(true);
   });
 
+  it('midnight-heist: the floor plan itself still spells the sweep order', () => {
+    // The plan is a hand-drawn asset, so the puzzle can be broken by editing
+    // the SVG alone — with the content module left perfectly valid. Read the
+    // room codes and their figures straight out of the artwork.
+    const svg = fs.readFileSync(
+      path.join(__dirname, '..', 'public', 'puzzles', 'midnight-heist', 'floor-plan.svg'), 'utf8');
+    const texts = [...svg.matchAll(/<text x="(\d+)" y="(\d+)">([A-Z0-9])<\/text>/g)]
+      .map((m) => ({ x: +m[1], y: +m[2], v: m[3] }));
+    const row = (y) => (y < 200 ? 0 : y < 325 ? 1 : 2);
+    const rooms = texts.filter((t) => /[A-Z]/.test(t.v)).map((L) => ({
+      letter: L.v,
+      n: texts.find((F) => /[0-9]/.test(F.v) && F.x === L.x && row(F.y) === row(L.y))?.v,
+    }));
+    expect(rooms.length, 'no rooms found in the plan').toBe(7);
+    expect(rooms.every((r) => r.n), 'a room has no figure').toBe(true);
+    const word = rooms.sort((a, b) => Number(b.n) - Number(a.n)).map((r) => r.letter).join('');
+    expect(word).toBe('HALLWAY');
+    const puzzle = ADVENTURES['midnight-heist'].puzzles.find((p) => p.id === 'gallery-map');
+    expect(checkAnswer(puzzle, word)).toBe(true);
+  });
+
   it('lighthouse-vigil: nine tallies form the lamp code', () => {
     const adv = ADVENTURES['lighthouse-vigil'];
     const digits = tokens(adv, /tally — (\d)/);

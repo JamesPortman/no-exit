@@ -48,4 +48,22 @@ const PLACE_NAMES = [
   'Harrowfen', 'Stillwater', 'Craghollow',
 ];
 
-module.exports = { TOKEN_WORDS, TARGETS, SECRETS, PLACE_NAMES };
+// Odd-one-out pools. Each pair is a rule and its exceptions; the generator
+// shows seven that obey and one that does not.
+const DOUBLED = [
+  'KETTLE', 'HOLLOW', 'MIRROR', 'BUTTON', 'RIBBON', 'CELLAR',
+  'SADDLE', 'HAMMER', 'TUNNEL', 'PILLOW', 'COPPER', 'WILLOW',
+];
+const UNDOUBLED = [
+  'HARBOUR', 'CANDLE', 'GARDEN', 'WINDOW', 'SHADOW', 'SILVER',
+  'WINTER', 'MARBLE', 'VELVET', 'THREAD', 'POCKET', 'BASKET', 'ANCHOR',
+];
+// Letters run strictly A→Z from first to last.
+const ASCENDING = [
+  'ALMOST', 'BIJOU', 'CHINTZ', 'DEFT', 'KNOW', 'GHOST', 'ADOPT',
+  'CHIMPS', 'BEFIT', 'DIRTY', 'EMPTY', 'BELOW',
+];
+
+module.exports = {
+  TOKEN_WORDS, TARGETS, SECRETS, PLACE_NAMES, DOUBLED, UNDOUBLED, ASCENDING,
+};

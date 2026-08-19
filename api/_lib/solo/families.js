@@ -10,7 +10,7 @@
 //      puzzle sets answerInPrompt (multiple-choice / read-the-label puzzles);
 //   2. answers need enough range that guessing inside the 15-per-minute
 //      answer limit is not a strategy.
-const { SECRETS, PLACE_NAMES } = require('./words.js');
+const { SECRETS, PLACE_NAMES, DOUBLED, UNDOUBLED, ASCENDING } = require('./words.js');
 
 const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const MONO = 'font-family:monospace;font-size:1.2rem;letter-spacing:0.1em';
@@ -179,37 +179,83 @@ function storyPuzzle(rng, ctx) {
   };
 }
 
-// ── Counting ──────────────────────────────────────────────────────────────
-function countingPuzzle(rng, ctx) {
-  const total = rng.int(17, 44);
-  const perRow = rng.int(6, 9);
-  const rows = [];
-  for (let i = 0; i < total; i += perRow) rows.push(Math.min(perRow, total - i));
-  const svgRows = rows.map((count, r) =>
-    Array.from({ length: count }, (_, c) =>
-      `<rect x="${18 + c * 30}" y="${18 + r * 34}" width="18" height="22" rx="2" `
-      + 'fill="#b98f3e" fill-opacity="0.55"/>').join(''),
-  ).join('');
-  const h = 24 + rows.length * 34;
+// ── Odd one out ───────────────────────────────────────────────────────────
+// Replaces an earlier "count the marks" puzzle. Counting shapes was busywork
+// rather than thinking — and the shapes were in the DOM, so it took one line
+// of JavaScript to skip. Spotting a rule cannot be scraped.
+function oddOneOutPuzzle(rng, ctx) {
+  const ascending = (w) => [...w].every((c, i, a) => i === 0 || a[i - 1] < c);
+  const doubled = (w) => /(.)\1/.test(w);
+  const useAlpha = rng.next() < 0.5;
+
+  let obey; let odd; let nudge; let nearly;
+  if (useAlpha) {
+    obey = rng.sample(ASCENDING, 7);
+    odd = rng.pick(UNDOUBLED.filter((w) => !ascending(w)));
+    nudge = 'Ignore what the words mean. Look at the order of the letters inside each one.';
+    nearly = 'Seven of them run steadily A-to-Z from first letter to last, never doubling back.';
+  } else {
+    obey = rng.sample(DOUBLED, 7);
+    odd = rng.pick(UNDOUBLED.filter((w) => !doubled(w)));
+    nudge = 'Ignore what the words mean. Look for a letter that appears twice in a row.';
+    nearly = 'Seven of them contain a doubled letter, side by side. One does not.';
+  }
+  const shown = rng.shuffle([...obey, odd]);
 
   return {
     id: `p${ctx.n}`,
-    title: 'The Stacked Marks',
+    title: 'The Labelled Row',
     type: 'observation',
+    // The answer is one of the words on display — that is the puzzle.
+    answerInPrompt: true,
     prompt:
-      `<p>${cap(ctx.theme.keeper)} tallied the store against ${rng.pick(ctx.theme.spots)} `
-      + 'and never wrote the total down. Count them.</p>'
-      + `<svg viewBox="0 0 ${18 + perRow * 30} ${h}" style="max-width:100%;height:auto">`
-      + `<rect width="100%" height="100%" fill="#1c212b"/>${svgRows}</svg>`
-      + '<p>How many marks are there?</p>',
+      `<p>${cap(ctx.theme.keeper)} labelled eight things along ${rng.pick(ctx.theme.spots)} `
+      + 'with words chosen for their <em>shape</em> rather than their meaning. '
+      + 'Seven follow the same rule. One does not.</p>'
+      + `<p style="${MONO}">${shown.join(' &nbsp; ')}</p>`
+      + '<p>Which word breaks the rule?</p>',
     media: [],
-    answers: [String(total)],
+    answers: [odd],
+    answerPattern: null,
+    hints: [hint(nudge, 60), hint(nearly, 90)],
+    solveMessage: solveLine(rng, ctx, 'The odd label lifts away from its hook.'),
+  };
+}
+
+// ── Ledger with a smudge ──────────────────────────────────────────────────
+function ledgerPuzzle(rng, ctx) {
+  const rows = rng.int(4, 5);
+  const entries = Array.from({ length: rows }, () => rng.int(12, 240));
+  const missingIdx = rng.int(0, rows - 1);
+  const missing = entries[missingIdx];
+  const total = entries.reduce((a, b) => a + b, 0);
+  const labels = rng.sample(ctx.theme.spots, rows);
+
+  const table = entries.map((v, i) =>
+    `<tr><td style="padding:3px 14px 3px 0">${cap(labels[i] || `line ${i + 1}`)}</td>`
+    + `<td style="text-align:right;font-family:monospace">`
+    + `${i === missingIdx ? '<strong>— smudged —</strong>' : v}</td></tr>`).join('');
+
+  return {
+    id: `p${ctx.n}`,
+    title: 'The Smudged Ledger',
+    type: 'logic',
+    prompt:
+      `<p>${cap(ctx.theme.keeper)}’s ledger balances to the figure at the foot `
+      + 'of the page, but damp has taken one of the entries:</p>'
+      + '<table style="margin:10px 0;font-size:0.95rem">' + table
+      + `<tr><td style="padding-top:8px;border-top:1px solid #4a5261">Total</td>`
+      + `<td style="text-align:right;font-family:monospace;padding-top:8px;`
+      + `border-top:1px solid #4a5261">${total}</td></tr></table>`
+      + '<p>What was the missing figure?</p>',
+    media: [],
+    answers: [String(missing)],
     answerPattern: null,
     hints: [
-      hint('Count one row at a time — the rows are even except the last.', 60),
-      hint(`There are ${rows.length} rows of ${perRow}, give or take the short one at the bottom.`, 90),
+      hint('The entries have to add up to the total at the foot — so the gap is what is left over.', 60),
+      hint(`Add the figures you can still read, then take that away from ${total}.`, 90),
     ],
-    solveMessage: solveLine(rng, ctx, 'The tally agrees.'),
+    solveMessage: solveLine(rng, ctx, 'The column balances.'),
   };
 }
 
@@ -310,6 +356,8 @@ function riddlePuzzle(rng, ctx) {
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const FAMILIES = [cipherPuzzle, sequencePuzzle, storyPuzzle, countingPuzzle, pathPuzzle];
+const FAMILIES = [
+  cipherPuzzle, sequencePuzzle, storyPuzzle, oddOneOutPuzzle, ledgerPuzzle, pathPuzzle,
+];
 
 module.exports = { FAMILIES, riddlePuzzle, solveLine, cap };

@@ -137,7 +137,7 @@
     <div class="chip"><dt>Game state</dt><dd>Upstash Redis, 6h TTL</dd></div>
     <div class="chip"><dt>History</dt><dd>Neon Postgres, 1 write/game</dd></div>
     <div class="chip"><dt>Auth</dt><dd>Bearer-style tokens, no accounts</dd></div>
-    <div class="chip"><dt>Tests</dt><dd>117 unit + 2 Playwright, gate CI</dd></div>
+    <div class="chip"><dt>Tests</dt><dd>142 unit + 8 Playwright, gate CI</dd></div>
   </dl>
 
   <section>
@@ -166,7 +166,7 @@
           <text x="750" y="78" text-anchor="middle" fill="#9aa3b2">game:CODE* keys</text>
           <text x="750" y="96" text-anchor="middle" fill="#9aa3b2">TTL 6h</text>
           <text x="750" y="188" text-anchor="middle">Neon Postgres</text>
-          <text x="750" y="208" text-anchor="middle" fill="#9aa3b2">game_results</text>
+          <text x="750" y="208" text-anchor="middle" fill="#9aa3b2">game_results · solo_scores</text>
         </g>
         <g stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="none">
           <path d="M200 70 H300"/>
@@ -185,10 +185,10 @@
     </div>
     <ul class="notes">
       <li>Everything a player sees is a static file; all game logic lives in
-        nine functions: <code>config</code>, <code>lookup</code>,
+        ten functions: <code>config</code>, <code>lookup</code>,
         <code>create</code>, <code>solo</code>, <code>join</code>,
         <code>state</code>, <code>answer</code>, <code>hint</code>,
-        <code>host</code> (+ <code>history</code>).</li>
+        <code>host</code>, <code>leaderboard</code> (+ <code>history</code>).</li>
       <li><code>solo</code> is the only ungated endpoint: it starts a
         single-player run with no host key, so it is deliberately a separate
         file rather than a branch inside the ADMIN-gated <code>create</code>.
@@ -271,12 +271,14 @@
     </table>
     <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
       All keys carry a 6-hour TTL — a finished game simply evaporates.
-      Durable history is one Postgres table, <code>game_results</code>
+      Durable history is two Postgres tables. <code>game_results</code>
       (one row per team per game: adventure, players, solved count, adjusted
       finish, penalties, winner flag), written exactly once when a game
       reaches <code>finished</code>, guarded by a flag saved <em>before</em>
       the insert so a poll race can at worst drop the row, never duplicate
-      it. Test-fixture adventures are never recorded.
+      it. Test-fixture adventures are never recorded. <code>solo_scores</code>
+      holds one row per completed solo run and is kept separate so public play
+      cannot crowd out a host's actual events.
     </p>
   </section>
 
@@ -320,6 +322,16 @@
         collapsed — so “Búho!” matches “buho”. An optional regex per puzzle
         handles patterned answers. The submitted <code>puzzleId</code> guards
         against double-advance when two teammates answer simultaneously.</p>
+      </div>
+      <div class="card">
+        <div class="title">Nothing is solved by counting</div>
+        <p>Puzzles that asked players to tally objects on screen have all been
+        removed — from the authored rooms and the generator alike. Two reasons.
+        In a browser the objects are in the DOM, so one line of JavaScript
+        answers the question; and even played honestly, counting is clerical
+        work rather than an insight. What replaced them deduces, decodes or
+        spots a rule: the gallery's night plan now prints its figures instead
+        of hiding them in rows of tiny frames.</p>
       </div>
       <div class="card">
         <div class="title">Meta chains are machine-verified</div>
@@ -416,7 +428,7 @@
       <div class="card">
         <div class="title">Every push</div>
         <ol>
-          <li>117 Vitest unit tests — engine, timing, sanitizer leak checks,
+          <li>142 Vitest unit tests — engine, timing, sanitizer leak checks,
             content schema + meta chains, i18n parity, host tools — run
             against the file store (no cloud needed).</li>
           <li>Playwright drives a real multi-team game through the actual UI:
@@ -477,7 +489,7 @@
         market, a frozen station — which supplies the title, the missing
         keeper, and the vocabulary every prompt and solve message is dressed
         in. Underneath, six puzzles are drawn from ciphers, sequences, story
-        arithmetic, counting and chart-reading, each handing over a mark that
+        arithmetic, rule-spotting, ledger reconciliation and chart-reading, each handing over a mark that
         the finale consumes.</p>
       </div>
       <div class="card">
@@ -490,9 +502,15 @@
       </div>
     </div>
     <ul class="notes">
-      <li>Solo runs are never written to Postgres: a personal best lives in the
-        player's own browser. Public traffic would otherwise bury real event
-        history, and generated runs are not comparable between players anyway.</li>
+      <li>A completed run is written to its own <code>solo_scores</code> table,
+        never to <code>game_results</code> — public traffic would otherwise bury
+        real event history, which is read back capped at 200 rows. The score is
+        taken from the game record server-side, never posted by the client.</li>
+      <li>The board shows each player's fastest escape, and the page says plainly
+        that every room is generated fresh, so runs are not strictly comparable:
+        bragging rights rather than a fair race. A browser-local personal best
+        sits alongside it, so a player with no interest in the board still has
+        something to beat.</li>
       <li>They are also private — <code>join</code> rejects them and
         <code>lookup</code> reports them as missing, so a guessed code cannot
         add company.</li>
@@ -514,18 +532,23 @@
 │   └── puzzles/&lt;slug&gt;/         # images referenced by puzzle prompts
 ├── api/
 │   ├── config · lookup · create · join · state · answer · hint · host · history
+│   ├── solo.js                 # public, ungated: starts a generated run
+│   ├── leaderboard.js          # public read; host-key delete
 │   └── _lib/
 │       ├── store.js            # Upstash Redis ⇄ file-store fallback (from TI)
 │       ├── games.js            # engine: codes, timing, ranking, answer checking
 │       ├── content.js          # adventure loader + anti-spoiler sanitizer
 │       ├── ratelimit.js        # fixed-window IP + team limiters (from TI)
-│       └── db.js               # Neon game_results writer (once per game)
+│       ├── riddles.js          # sealed riddle bank loader (optional)
+│       ├── solo/               # the generator: rng · themes · families · words
+│       └── db.js               # Neon writer: game_results + solo_scores
 ├── content/adventures/         # plaintext fixtures + authoring guide
 ├── content/sealed/             # the ten real adventures, AES-256-GCM
+├── content/solo/riddles.enc    # sealed riddle bank for generated runs
 ├── content/source/             # gitignored plaintext working copies
 ├── scripts/{seal,unseal}.js    # encrypt for commit / recover from ciphertext
-├── __tests__/                  # 117 Vitest specs (real handlers, file store)
-├── e2e/game.spec.js            # Playwright multi-browser full game
+├── __tests__/                  # 142 Vitest specs (real handlers, file store)
+├── e2e/                        # Playwright: full game · create form · solo
 ├── dev-server.js               # local static + api host on :3400
 └── .github/workflows/ci.yml    # test gate → prebuilt production deploy</pre>
   </section>
