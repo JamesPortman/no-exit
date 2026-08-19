@@ -20,6 +20,32 @@ const ADVENTURES = Object.fromEntries(
 
 // Guard: the sealed content must actually be reachable wherever the key is
 // present, or these suites would silently shrink to the fixture alone.
+describe("the host's adventure list", () => {
+  it('hides the fixtures when there is real content, and falls back to them when there is not', () => {
+    const { resetCache } = require('../api/_lib/content.js');
+    const slugs = () => listAdventures().map((a) => a.slug);
+
+    if (SEALED_AVAILABLE) {
+      // Production: the fixtures are scaffolding, so hosts never see them.
+      expect(slugs().some((s) => s.startsWith('test-'))).toBe(false);
+      expect(slugs().length).toBeGreaterThan(0);
+    }
+
+    // A clone with no key has nothing else to play. An empty dropdown would
+    // make the app look broken, so the fixtures surface instead.
+    const key = process.env.ADVENTURE_KEY;
+    try {
+      delete process.env.ADVENTURE_KEY;
+      resetCache();
+      expect(slugs().sort()).toEqual(['test-adventure', 'test-long']);
+    } finally {
+      if (key === undefined) delete process.env.ADVENTURE_KEY;
+      else process.env.ADVENTURE_KEY = key;
+      resetCache();
+    }
+  });
+});
+
 describe('sealed content', () => {
   it('opens every sealed adventure when a key is available', () => {
     const sealedCount = fs.existsSync(path.join(__dirname, '..', 'content', 'sealed'))

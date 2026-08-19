@@ -49,10 +49,14 @@ function getAdventure(slug) {
   return loadAll()[slug] || null;
 }
 
-// Listing for the create-game page. Fixtures are hidden unless asked for.
+// Listing for the create-game page. Fixtures are hidden while there is
+// anything real to play; in a clone with no key they ARE the app, so they
+// surface rather than leaving the host with an empty dropdown.
 function listAdventures({ includeHidden = false } = {}) {
-  return Object.values(loadAll())
-    .filter((a) => includeHidden || !a.hidden)
+  const all = Object.values(loadAll());
+  const playable = all.filter((a) => !a.hidden);
+  const shown = includeHidden || !playable.length ? all : playable;
+  return shown
     .map((a) => ({
       slug: a.slug,
       title: a.title,
