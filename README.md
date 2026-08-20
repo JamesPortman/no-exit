@@ -14,7 +14,10 @@ Interface and puzzle content both localize to English, Spanish and
 Portuguese: the poll carries `lang` and the server renders puzzle text in it.
 Accepted answers deliberately do NOT localize — they are the union across
 every language, so switching mid-run never invalidates an answer a player has
-already worked out. Solo's generated rooms are still rendered in English.
+already worked out. Solo's generated rooms localize too: the generator picks
+its data once from the seed and renders that same data through a per-language
+lexicon, so a run is the same room — same mechanic, same numbers, same answer
+— whichever language it is read in.
 
 ## Layout
 

@@ -7,6 +7,11 @@
 // Each theme supplies: a keeper (whose absence is the premise), `spots` (where
 // things are found) and `props` (what carries a mark). Puzzle prompts and
 // solve messages draw from these, so the vocabulary stays inside the fiction.
+//
+// The Spanish and Portuguese vocabulary lives in themes.i18n.js and is merged
+// in below, so the English definitions here stay readable. Its `spots` and
+// `props` arrays are parallel to the English ones — the generator picks an
+// index with the seed and indexes every language with it.
 
 const THEMES = [
   {
@@ -148,4 +153,28 @@ const THEMES = [
   },
 ];
 
-module.exports = { THEMES };
+const VOCAB = require('./themes.i18n.js');
+
+// Merge the localized vocabulary onto each theme's existing es/pt block,
+// which already carries its title and intro.
+const LOCALIZED = THEMES.map((t) => {
+  const v = VOCAB[t.key] || {};
+  return {
+    ...t,
+    es: { ...(t.es || {}), ...(v.es || {}) },
+    pt: { ...(t.pt || {}), ...(v.pt || {}) },
+  };
+});
+
+// The vocabulary a run is dressed in, for one language. Falls back to English
+// field by field, so a theme that is only half translated still renders.
+function vocab(theme, lang) {
+  const t = lang && lang !== 'en' ? theme[lang] : null;
+  return {
+    keeper: (t && t.keeper) || theme.keeper,
+    spots: (t && t.spots && t.spots.length === theme.spots.length) ? t.spots : theme.spots,
+    props: (t && t.props && t.props.length === theme.props.length) ? t.props : theme.props,
+  };
+}
+
+module.exports = { THEMES: LOCALIZED, vocab };

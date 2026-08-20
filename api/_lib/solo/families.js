@@ -1,182 +1,204 @@
 // Puzzle families for generated Solo runs.
 //
 // Each family is a pure function of (rng, ctx) and returns one puzzle in the
-// standard adventure schema. `ctx.token` is the mark this puzzle hands the
-// player for the finale; it is unrelated to the puzzle's own answer, so
-// emitting it never leaks anything.
+// standard adventure schema, translated into every supported language.
 //
-// Two rules every family must honour:
+// The shape that makes that possible: a family consumes the rng ONCE to choose
+// its data — which cipher, which numbers, which spot in the room — and then
+// renders that same data through each language's lexicon. Language never
+// touches the rng, so a run is the same room, with the same answer, whichever
+// language it is read in. Anything drawn from the theme is chosen as an INDEX
+// so every language indexes its own parallel vocabulary.
+//
+// Three rules every family must honour:
 //   1. the answer must never appear in its own prompt or hints, unless the
 //      puzzle sets answerInPrompt (multiple-choice / read-the-label puzzles);
 //   2. answers need enough range that guessing inside the 15-per-minute
-//      answer limit is not a strategy.
+//      answer limit is not a strategy;
+//   3. the mark in the solve message is never localized — the finale reads it
+//      back, so a translated mark would break the run in that language alone.
 const { SECRETS, PLACE_NAMES, DOUBLED, UNDOUBLED, ASCENDING } = require('./words.js');
+const { vocab } = require('./themes.js');
+const { LEX, SOLO_LANGS, contract, cap } = require('./lang.js');
 
 const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const MONO = 'font-family:monospace;font-size:1.2rem;letter-spacing:0.1em';
 
-// Where this puzzle's mark turns up, in the run's own vocabulary.
-function solveLine(rng, ctx, lead) {
-  const spot = rng.pick(ctx.theme.spots);
-  const prop = rng.pick(ctx.theme.props);
-  return `${lead} Behind ${spot}, ${prop} reads “mark — ${ctx.token}”.`;
+// Theme picks are indices, not strings: the same index addresses the Spanish
+// and Portuguese vocabulary, so the run stays one coherent room.
+const spotIdx = (rng, ctx) => rng.int(0, ctx.theme.spots.length - 1);
+const propIdx = (rng, ctx) => rng.int(0, ctx.theme.props.length - 1);
+const sampleIdx = (rng, n, len) => rng.sample([...Array(len).keys()], n);
+
+// Assemble a puzzle from a per-language render function. English is the
+// top-level content; the others go in `i18n`, exactly as an authored
+// adventure carries them, so the same server-side localization path serves
+// generated and authored rooms alike.
+function build(ctx, {
+  type, answers, answerPattern = null, answerInPrompt = false,
+  penalties = [60, 90], render,
+}) {
+  const one = (lang) => {
+    const r = render(lang);
+    const fix = (s) => contract(lang, s);
+    return {
+      title: fix(r.title),
+      prompt: fix(r.prompt),
+      hints: r.hints.map((text) => fix(text)),
+      solveMessage: fix(r.solveMessage),
+      answers: r.answers,
+    };
+  };
+
+  const en = one('en');
+  const puzzle = {
+    id: `p${ctx.n}`,
+    title: en.title,
+    type,
+    prompt: en.prompt,
+    media: [],
+    answers,
+    answerPattern,
+    hints: en.hints.map((text, i) => ({ text, penaltySec: penalties[i] })),
+    solveMessage: en.solveMessage,
+    i18n: {},
+  };
+  if (answerInPrompt) puzzle.answerInPrompt = true;
+
+  for (const lang of SOLO_LANGS) {
+    if (lang === 'en') continue;
+    const r = one(lang);
+    puzzle.i18n[lang] = {
+      title: r.title,
+      prompt: r.prompt,
+      // Penalties never localize; content.js keeps the authored ones.
+      hints: r.hints.map((text) => ({ text })),
+      solveMessage: r.solveMessage,
+      ...(r.answers ? { answers: r.answers } : {}),
+    };
+  }
+  return puzzle;
 }
-
-const hint = (text, penaltySec) => ({ text, penaltySec });
 
 // ── Cipher ────────────────────────────────────────────────────────────────
 function cipherPuzzle(rng, ctx) {
   const secret = rng.pick(SECRETS);
   const scheme = rng.pick(['caesar', 'atbash', 'a1z26', 'reverse']);
   const up = secret.toUpperCase();
-  let shown; let how; let nudge; let nearly;
+  let shown; let k = 0;
 
   if (scheme === 'caesar') {
-    const k = rng.int(1, 3);
+    k = rng.int(1, 3);
     shown = [...up].map((c) => A[(A.indexOf(c) + k) % 26]).join('');
-    how = `every letter nudged <strong>${k} place${k > 1 ? 's' : ''} forward</strong> in the alphabet`;
-    nudge = `Step each letter back by ${k} and read it again.`;
-    nearly = `The first letter steps back to ${up[0]}, the second to ${up[1]}.`;
   } else if (scheme === 'atbash') {
     shown = [...up].map((c) => A[25 - A.indexOf(c)]).join('');
-    how = 'the alphabet folded end to end — A stands where Z should be';
-    nudge = 'Write the alphabet forwards, then backwards underneath. Each letter swaps with the one below it.';
-    nearly = `Folded back, the first two letters are ${up[0]} and ${up[1]}.`;
   } else if (scheme === 'a1z26') {
     shown = [...up].map((c) => A.indexOf(c) + 1).join(' · ');
-    how = 'each letter traded for its place in the alphabet';
-    nudge = '1 is A, 2 is B, and so on. Count to each number.';
-    nearly = `The first number gives ${up[0]}, the second ${up[1]}.`;
   } else {
     shown = [...up].reverse().join('');
-    how = 'written to be read from the wrong end';
-    nudge = 'Read it right to left, last letter first.';
-    nearly = `Reversed, it begins ${up[0]}${up[1]}.`;
   }
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Marked Line',
+  return build(ctx, {
     type: 'cipher',
-    prompt:
-      `<p>${cap(ctx.theme.keeper)} kept one line in a private hand — `
-      + `${how}:</p><p style="${MONO}">${shown}</p><p>What does it say?</p>`,
-    media: [],
+    // The plaintext is an English word in every language: the mechanic
+    // produces letters, not vocabulary, exactly as in the authored rooms.
     answers: [secret, `the ${secret}`],
-    answerPattern: null,
-    hints: [hint(nudge, 60), hint(nearly, 90)],
-    solveMessage: solveLine(rng, ctx, 'The line reads plainly once you turn it.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      return {
+        title: L.cipher.title,
+        prompt: L.cipher.prompt({ keeper: v.keeper, how: L.cipher.how[scheme](k), shown }),
+        hints: [L.cipher.nudge[scheme](k), L.cipher.nearly[scheme](up[0], up[1])],
+        solveMessage: L.mark({
+          lead: L.cipher.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Number sequence ───────────────────────────────────────────────────────
 function sequencePuzzle(rng, ctx) {
   const kind = rng.pick(['arithmetic', 'geometric', 'gaps', 'squares']);
-  let seq; let answer; let nudge; let nearly;
+  let seq; let answer; let param;
 
   if (kind === 'arithmetic') {
     const start = rng.int(3, 19); const step = rng.int(4, 13);
     seq = Array.from({ length: 5 }, (_, i) => start + i * step);
-    answer = start + 5 * step;
-    nudge = 'The same amount is added every time.';
-    nearly = `Each step adds ${step}.`;
+    answer = start + 5 * step; param = step;
   } else if (kind === 'geometric') {
     const start = rng.int(2, 5); const r = rng.pick([2, 3]);
     seq = Array.from({ length: 5 }, (_, i) => start * r ** i);
-    answer = start * r ** 5;
-    nudge = 'Each entry is a multiple of the one before it.';
-    nearly = `Everything multiplies by ${r}.`;
+    answer = start * r ** 5; param = r;
   } else if (kind === 'gaps') {
     const start = rng.int(2, 9); let cur = start; const out = [cur];
     for (let i = 1; i < 5; i++) { cur += i + 1; out.push(cur); }
     seq = out; answer = cur + 6;
-    nudge = 'Look at the gaps between the numbers, not the numbers themselves.';
-    nearly = 'The gaps grow by one each time: +2, +3, +4, +5, then +6.';
   } else {
     const start = rng.int(2, 6);
     seq = Array.from({ length: 5 }, (_, i) => (start + i) ** 2);
-    answer = (start + 5) ** 2;
-    nudge = 'Every entry is a number multiplied by itself.';
-    nearly = `They are the squares counting up from ${start}.`;
+    answer = (start + 5) ** 2; param = start;
   }
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Tally',
+  return build(ctx, {
     type: 'logic',
-    prompt:
-      `<p>A column of figures runs down ${rng.pick(ctx.theme.spots)}, `
-      + `in ${ctx.theme.keeper}’s deliberate hand:</p>`
-      + `<p style="${MONO}">${seq.join(' &nbsp; ')} &nbsp; ?</p>`
-      + '<p>What comes next?</p>',
-    media: [],
     answers: [String(answer)],
-    answerPattern: null,
-    hints: [hint(nudge, 60), hint(nearly, 90)],
-    solveMessage: solveLine(rng, ctx, 'The column completes itself.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      return {
+        title: L.sequence.title,
+        prompt: L.sequence.prompt({
+          keeper: v.keeper, spot: v.spots[si], seq: seq.join(' &nbsp; '),
+        }),
+        hints: [L.sequence.nudge[kind](), L.sequence.nearly[kind](param)],
+        solveMessage: L.mark({
+          lead: L.sequence.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Story arithmetic ──────────────────────────────────────────────────────
 function storyPuzzle(rng, ctx) {
   const kind = rng.pick(['split', 'pond', 'gears', 'sumdiff']);
-  let body; let answer; let nudge; let nearly; let title;
+  let answer; let args;
 
   if (kind === 'split') {
     const small = rng.int(4, 15); const k = rng.int(2, 4);
-    const total = small * (k + 1);
-    title = 'The Two Vessels';
-    body =
-      `<ul><li>The larger holds <strong>${k} times</strong> as much as the smaller.</li>`
-      + `<li>Together they hold <strong>${total}</strong> measures.</li></ul>`
-      + '<p>How many measures are in the smaller one?</p>';
+    args = { k, total: small * (k + 1) };
     answer = small;
-    nudge = 'Count everything in units of the smaller vessel.';
-    nearly = `That makes ${k + 1} small vessels in ${total} measures.`;
   } else if (kind === 'pond') {
     const day = rng.int(14, 40);
-    title = 'The Doubling';
-    body =
-      `<p><em>“It doubles what it covers every day, and on day `
-      + `${day} it covered the whole surface.”</em></p>`
-      + '<p>On which day was exactly half of it covered?</p>';
+    args = { day };
     answer = day - 1;
-    nudge = 'Do not work forward from the start — work backward from the end.';
-    nearly = 'If it doubles daily, one day earlier it was exactly half.';
   } else if (kind === 'gears') {
-    const small = rng.pick([12, 15, 20, 25]); const turns = rng.int(3, 6);
-    title = 'The Meshed Wheels';
-    body =
-      `<p>The great wheel carries <strong>${small * turns} teeth</strong>, `
-      + `the pinion <strong>${small}</strong>.</p>`
-      + '<p>One full turn of the great wheel turns the pinion how many times?</p>';
+    const pinion = rng.pick([12, 15, 20, 25]); const turns = rng.int(3, 6);
+    args = { pinion, teeth: pinion * turns };
     answer = turns;
-    nudge = 'Every tooth of the big wheel pushes one tooth of the small one.';
-    nearly = `All ${small * turns} teeth pass; the pinion swallows them ${small} at a time.`;
   } else {
     const b = rng.int(6, 24); const d = rng.int(4, 20);
-    const s = 2 * b + d;
-    title = 'The Uneven Pair';
-    body =
-      `<ul><li>Two counts come to <strong>${s}</strong> together.</li>`
-      + `<li>One exceeds the other by <strong>${d}</strong>.</li></ul>`
-      + '<p>What is the smaller count?</p>';
+    args = { s: 2 * b + d, d };
     answer = b;
-    nudge = 'Take the difference off the total first, then the rest splits evenly.';
-    nearly = `${s} minus ${d} is ${s - d}, shared equally between the two.`;
   }
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
-  return {
-    id: `p${ctx.n}`,
-    title,
+  return build(ctx, {
     type: 'logic',
-    prompt: `<p>Chalked beside ${rng.pick(ctx.theme.spots)}:</p>${body}`,
-    media: [],
     answers: [String(answer)],
-    answerPattern: null,
-    hints: [hint(nudge, 60), hint(nearly, 90)],
-    solveMessage: solveLine(rng, ctx, 'The figures balance.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang); const S = L.story[kind];
+      return {
+        title: S.title,
+        prompt: L.story.prompt({ spot: v.spots[si], body: S.body(args) }),
+        hints: [S.nudge(), S.nearly(args)],
+        solveMessage: L.mark({
+          lead: L.story.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Odd one out ───────────────────────────────────────────────────────────
@@ -188,38 +210,38 @@ function oddOneOutPuzzle(rng, ctx) {
   const doubled = (w) => /(.)\1/.test(w);
   const useAlpha = rng.next() < 0.5;
 
-  let obey; let odd; let nudge; let nearly;
+  let obey; let odd;
   if (useAlpha) {
     obey = rng.sample(ASCENDING, 7);
     odd = rng.pick(UNDOUBLED.filter((w) => !ascending(w)));
-    nudge = 'Ignore what the words mean. Look at the order of the letters inside each one.';
-    nearly = 'Seven of them run steadily A-to-Z from first letter to last, never doubling back.';
   } else {
     obey = rng.sample(DOUBLED, 7);
     odd = rng.pick(UNDOUBLED.filter((w) => !doubled(w)));
-    nudge = 'Ignore what the words mean. Look for a letter that appears twice in a row.';
-    nearly = 'Seven of them contain a doubled letter, side by side. One does not.';
   }
   const shown = rng.shuffle([...obey, odd]);
+  const rule = useAlpha ? 'alpha' : 'dbl';
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Labelled Row',
+  return build(ctx, {
     type: 'observation',
-    // The answer is one of the words on display — that is the puzzle.
+    // The answer is one of the words on display — that is the puzzle. The
+    // words are letter-shape artefacts, so they are not translated.
     answerInPrompt: true,
-    prompt:
-      `<p>${cap(ctx.theme.keeper)} labelled eight things along ${rng.pick(ctx.theme.spots)} `
-      + 'with words chosen for their <em>shape</em> rather than their meaning. '
-      + 'Seven follow the same rule. One does not.</p>'
-      + `<p style="${MONO}">${shown.join(' &nbsp; ')}</p>`
-      + '<p>Which word breaks the rule?</p>',
-    media: [],
     answers: [odd],
-    answerPattern: null,
-    hints: [hint(nudge, 60), hint(nearly, 90)],
-    solveMessage: solveLine(rng, ctx, 'The odd label lifts away from its hook.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      return {
+        title: L.odd.title,
+        prompt: L.odd.prompt({
+          keeper: v.keeper, spot: v.spots[si], shown: shown.join(' &nbsp; '),
+        }),
+        hints: [L.odd[rule].nudge(), L.odd[rule].nearly()],
+        solveMessage: L.mark({
+          lead: L.odd.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Ledger with a smudge ──────────────────────────────────────────────────
@@ -229,34 +251,35 @@ function ledgerPuzzle(rng, ctx) {
   const missingIdx = rng.int(0, rows - 1);
   const missing = entries[missingIdx];
   const total = entries.reduce((a, b) => a + b, 0);
-  const labels = rng.sample(ctx.theme.spots, rows);
+  const labelIdx = sampleIdx(rng, rows, ctx.theme.spots.length);
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
-  const table = entries.map((v, i) =>
-    `<tr><td style="padding:3px 14px 3px 0">${cap(labels[i] || `line ${i + 1}`)}</td>`
-    + `<td style="text-align:right;font-family:monospace">`
-    + `${i === missingIdx ? '<strong>— smudged —</strong>' : v}</td></tr>`).join('');
-
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Smudged Ledger',
+  return build(ctx, {
     type: 'logic',
-    prompt:
-      `<p>${cap(ctx.theme.keeper)}’s ledger balances to the figure at the foot `
-      + 'of the page, but damp has taken one of the entries:</p>'
-      + '<table style="margin:10px 0;font-size:0.95rem">' + table
-      + `<tr><td style="padding-top:8px;border-top:1px solid #4a5261">Total</td>`
-      + `<td style="text-align:right;font-family:monospace;padding-top:8px;`
-      + `border-top:1px solid #4a5261">${total}</td></tr></table>`
-      + '<p>What was the missing figure?</p>',
-    media: [],
     answers: [String(missing)],
-    answerPattern: null,
-    hints: [
-      hint('The entries have to add up to the total at the foot — so the gap is what is left over.', 60),
-      hint(`Add the figures you can still read, then take that away from ${total}.`, 90),
-    ],
-    solveMessage: solveLine(rng, ctx, 'The column balances.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      const body = entries.map((val, i) => {
+        const label = v.spots[labelIdx[i]] || L.ledger.lineLabel(i + 1);
+        const cell = i === missingIdx ? `<strong>— ${L.ledger.smudged} —</strong>` : val;
+        return `<tr><td style="padding:3px 14px 3px 0">${cap(label)}</td>`
+          + `<td style="text-align:right;font-family:monospace">${cell}</td></tr>`;
+      }).join('');
+      const table = '<table style="margin:10px 0;font-size:0.95rem">' + body
+        + '<tr><td style="padding-top:8px;border-top:1px solid #4a5261">'
+        + `${L.ledger.totalLabel}</td>`
+        + '<td style="text-align:right;font-family:monospace;padding-top:8px;'
+        + `border-top:1px solid #4a5261">${total}</td></tr></table>`;
+      return {
+        title: L.ledger.title,
+        prompt: L.ledger.prompt({ keeper: v.keeper, table }),
+        hints: [L.ledger.nudge(), L.ledger.nearly(total)],
+        solveMessage: L.mark({
+          lead: L.ledger.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Path across a chart ───────────────────────────────────────────────────
@@ -281,83 +304,95 @@ function pathPuzzle(rng, ctx) {
     if (b === 'EAST') col += 1;
   }
   const answer = grid[row][col];
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
 
   const table = grid.map((r, ri) => '<tr>' + r.map((cell, ci) =>
     `<td style="border:1px solid #4a5261;padding:5px 7px;font-size:0.82rem;`
     + `${ri === startRow && ci === startCol ? 'color:#e0a83c;font-weight:700' : ''}">`
     + `${ri === startRow && ci === startCol ? '★ ' : ''}${cell}</td>`).join('') + '</tr>').join('');
+  const chart = '<table style="border-collapse:collapse;margin:10px 0">' + table + '</table>';
 
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Chart',
+  return build(ctx, {
     type: 'observation',
     // The destination is printed on the chart by design — that is the puzzle.
+    // Place names are proper nouns and identical in every language, so the
+    // answer is too.
     answerInPrompt: true,
-    prompt:
-      `<p>A chart is pinned above ${rng.pick(ctx.theme.spots)}. `
-      + 'North is up. Start at the marked square (★) and follow '
-      + `${ctx.theme.keeper}’s bearings, one square each:</p>`
-      + `<p style="${MONO}">${bearings.join(' · ')}</p>`
-      + '<table style="border-collapse:collapse;margin:10px 0">' + table + '</table>'
-      + '<p>Where do you end up?</p>',
-    media: [],
     answers: [answer],
-    answerPattern: null,
-    hints: [
-      hint('North is up, south is down, west is left, east is right — one square per bearing.', 60),
-      hint(`From the star, the first two moves are ${bearings[0].toLowerCase()} then ${bearings[1].toLowerCase()}.`, 90),
-    ],
-    solveMessage: solveLine(rng, ctx, 'The chart gives up its corner.'),
-  };
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      const words = bearings.map((b) => L.path.bearings[b]);
+      return {
+        title: L.path.title,
+        prompt: L.path.prompt({
+          keeper: v.keeper, spot: v.spots[si], bearings: words.join(' · '), table: chart,
+        }),
+        hints: [L.path.nudge(), L.path.nearly(words[0], words[1])],
+        solveMessage: L.mark({
+          lead: L.path.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
 }
 
 // ── Riddle (sealed bank) or anagram fallback ──────────────────────────────
 function riddlePuzzle(rng, ctx) {
   const r = ctx.riddle;
+  const si = spotIdx(rng, ctx); const pi = propIdx(rng, ctx);
+
   if (r) {
-    return {
-      id: `p${ctx.n}`,
-      title: 'The Old Question',
+    // A bank entry may carry its own es/pt text. Where it does not, the
+    // English question stands in for that language — a run is never blocked
+    // on a riddle being translated.
+    return build(ctx, {
       type: 'wordplay',
-      prompt:
-        `<p>Scratched into ${rng.pick(ctx.theme.spots)}, the question `
-        + `${ctx.theme.keeper} asks everyone:</p><p><em>“${r.q}”</em></p>`,
-      media: [],
       answers: r.answers,
-      answerPattern: null,
-      hints: r.hints,
-      solveMessage: solveLine(rng, ctx, 'The old question yields.'),
-    };
+      penalties: (r.hints || []).map((h) => h.penaltySec),
+      render: (lang) => {
+        const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+        const t = (lang !== 'en' && r[lang]) || null;
+        return {
+          title: L.riddle.title,
+          prompt: L.riddle.prompt({ keeper: v.keeper, spot: v.spots[si], q: (t && t.q) || r.q }),
+          hints: (r.hints || []).map((h, i) => ((t && t.hints && t.hints[i]) || h.text)),
+          solveMessage: L.mark({
+            lead: L.riddle.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+          }),
+          answers: t && t.answers ? t.answers : undefined,
+        };
+      },
+    });
   }
+
   // No riddle bank (a clone with no key, or CI): a self-contained anagram
   // stands in, so a run is always complete.
   const secret = rng.pick(SECRETS);
   let scrambled = rng.shuffle([...secret.toUpperCase()]).join('');
   if (scrambled === secret.toUpperCase()) scrambled = [...scrambled].reverse().join('');
-  return {
-    id: `p${ctx.n}`,
-    title: 'The Jumbled Tag',
-    type: 'wordplay',
-    prompt:
-      `<p>A tag has come loose at ${rng.pick(ctx.theme.spots)} and its letters `
-      + 'have shaken out of order:</p>'
-      + `<p style="${MONO}">${scrambled}</p>`
-      + '<p>What did the tag say?</p>',
-    media: [],
-    answers: [secret, `the ${secret}`],
-    answerPattern: null,
-    hints: [
-      hint('Every letter is used exactly once — nothing added, nothing missing.', 60),
-      hint(`It begins with ${secret[0].toUpperCase()} and runs ${secret.length} letters.`, 90),
-    ],
-    solveMessage: solveLine(rng, ctx, 'The letters settle.'),
-  };
-}
 
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  return build(ctx, {
+    type: 'wordplay',
+    answers: [secret, `the ${secret}`],
+    render: (lang) => {
+      const L = LEX[lang]; const v = vocab(ctx.theme, lang);
+      return {
+        title: L.anagram.title,
+        prompt: L.anagram.prompt({ spot: v.spots[si], scrambled }),
+        hints: [
+          L.anagram.nudge(),
+          L.anagram.nearly({ first: secret[0].toUpperCase(), len: secret.length }),
+        ],
+        solveMessage: L.mark({
+          lead: L.anagram.solve, spot: v.spots[si], prop: v.props[pi], token: ctx.token,
+        }),
+      };
+    },
+  });
+}
 
 const FAMILIES = [
   cipherPuzzle, sequencePuzzle, storyPuzzle, oddOneOutPuzzle, ledgerPuzzle, pathPuzzle,
 ];
 
-module.exports = { FAMILIES, riddlePuzzle, solveLine, cap };
+module.exports = { FAMILIES, riddlePuzzle, build };

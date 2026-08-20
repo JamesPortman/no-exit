@@ -11,10 +11,12 @@ const { checkAnswer } = require('../api/_lib/games.js');
 const { keyFromEnv } = require('../api/_lib/seal.js');
 
 // Bump deliberately when the generator changes on purpose.
-const EXPECTED_FINGERPRINT = '1cc59e164412b312';
+const EXPECTED_FINGERPRINT = '2ee768d0577c1630';
 
 const SEEDS = Array.from({ length: 200 }, (_, i) => `seed-${i}`);
-const MARK = /“mark — ([A-Z0-9]+)”/;
+// The label before the dash is prose and localizes (“mark”, “marca”); the
+// mark itself never does, so match on the dash.
+const MARK = /— ([A-Z0-9]+)”/;
 
 // Generate as a clone with no ADVENTURE_KEY would — the state CI's E2E job
 // and any fork runs in.
@@ -104,9 +106,16 @@ describe('solo generator', () => {
   });
 
   it('stays small enough to live on the game record', () => {
+    // The whole run is materialised onto the game record and re-read from KV
+    // on every 2s poll, so size is a running cost, not just a storage one.
+    // Carrying three languages put the largest run at ~23.6KB against the
+    // original 24KB cap — too tight to survive an edit — so the ceiling is set
+    // where it still catches real bloat rather than tripping on a long riddle.
+    let largest = 0;
     for (const seed of SEEDS) {
-      expect(JSON.stringify(generate(seed)).length, seed).toBeLessThan(24_000);
+      largest = Math.max(largest, JSON.stringify(generate(seed)).length);
     }
+    expect(largest).toBeLessThan(40_000);
   });
 
   it('never embeds the seed in anything the client could see', () => {
@@ -142,5 +151,69 @@ describe('the sealed riddle bank', () => {
     expect(bank.length).toBeGreaterThanOrEqual(40);
     const answers = new Set(bank.map((r) => r.answers[0].toLowerCase()));
     expect(answers.size).toBe(bank.length); // no two riddles share a solution
+  });
+});
+
+// A generated room has to be the SAME room in every language: same mechanic,
+// same numbers, same answer, same marks — only the prose differs. Language is
+// applied after the seed has chosen everything, so any divergence here means
+// the generator has started consuming randomness per language.
+describe('generated runs are localized', () => {
+  const { localizeAdventure, LANGS } = require('../api/_lib/content.js');
+  const strip = (h) => String(h).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  it('translates every puzzle into every supported language', () => {
+    for (const seed of SEEDS.slice(0, 40)) {
+      for (const p of generate(seed).puzzles) {
+        for (const lang of LANGS.filter((l) => l !== 'en')) {
+          const t = p.i18n && p.i18n[lang];
+          expect(t, `${seed}/${p.id}: no ${lang}`).toBeTruthy();
+          expect(strip(t.title), `${seed}/${p.id} ${lang} title`).not.toBe('');
+          expect(strip(t.prompt), `${seed}/${p.id} ${lang} prompt`).not.toBe('');
+          expect(strip(t.solveMessage), `${seed}/${p.id} ${lang} solve`).not.toBe('');
+          expect(t.hints, `${seed}/${p.id} ${lang} hints`).toHaveLength(p.hints.length);
+          for (const h of t.hints) expect(strip(h.text)).not.toBe('');
+        }
+      }
+    }
+  });
+
+  it('hands out the same marks whatever language it is read in', () => {
+    for (const seed of SEEDS.slice(0, 60)) {
+      const adv = generate(seed);
+      const marksIn = (a) => a.puzzles.slice(0, -1).map((p) => MARK.exec(p.solveMessage)?.[1]);
+      const en = marksIn(adv);
+      for (const lang of LANGS) {
+        expect(marksIn(localizeAdventure(adv, lang)), `${seed}/${lang}`).toEqual(en);
+      }
+    }
+  });
+
+  it('keeps the finale derivable in every language', () => {
+    for (const seed of SEEDS.slice(0, 60)) {
+      for (const lang of LANGS) {
+        const adv = localizeAdventure(generate(seed), lang);
+        const marks = adv.puzzles.slice(0, -1).map((p) => MARK.exec(p.solveMessage)?.[1]);
+        expect(marks.filter(Boolean), `${seed}/${lang}`).toHaveLength(TOKEN_PUZZLES);
+        const derived = /^\d+$/.test(marks[0])
+          ? marks.join('')
+          : marks.map((m) => m[0]).join('').toLowerCase();
+        expect(checkAnswer(adv.puzzles.at(-1), derived), `${seed}/${lang}`).toBe(true);
+      }
+    }
+  });
+
+  it('leaks no answer in any language, and no untranslated placeholder', () => {
+    for (const seed of SEEDS.slice(0, 40)) {
+      for (const lang of LANGS) {
+        const adv = localizeAdventure(generate(seed), lang);
+        assertNoAnswerLeaks(adv, `${seed}/${lang}`);
+        // A template that silently rendered "undefined" or "[object Object]"
+        // would still be a non-empty string, so check for the tell.
+        const all = JSON.stringify(adv);
+        expect(all, `${seed}/${lang}`).not.toContain('undefined');
+        expect(all, `${seed}/${lang}`).not.toContain('[object Object]');
+      }
+    }
   });
 });

@@ -10,7 +10,9 @@
 const { makeRng } = require('./rng.js');
 const { THEMES } = require('./themes.js');
 const { TOKEN_WORDS, TARGETS } = require('./words.js');
-const { FAMILIES, riddlePuzzle } = require('./families.js');
+const { FAMILIES, riddlePuzzle, build } = require('./families.js');
+const { LEX } = require('./lang.js');
+const { vocab } = require('./themes.js');
 const { loadRiddles } = require('../riddles.js');
 
 const TOKEN_PUZZLES = 6;   // plus the finale
@@ -18,6 +20,10 @@ const DURATION_MIN = 15;
 
 // The finale: either the initials of six marks spelling a word, or the six
 // marks read as a code. Both mirror mechanics used by the authored rooms.
+//
+// The target word and the token words are NOT translated. The mechanic is
+// letters — the initials of the marks the player collected — so the answer is
+// produced by the puzzle, not by vocabulary, exactly as in the authored rooms.
 function buildFinale(rng, theme, n) {
   if (rng.next() < 0.5) {
     const target = rng.pick(TARGETS);
@@ -28,50 +34,40 @@ function buildFinale(rng, theme, n) {
     });
     return {
       tokens,
-      puzzle: {
-        id: `p${n}`,
-        title: 'The Last Door',
+      puzzle: build({ theme, n }, {
         type: 'meta',
-        prompt:
-          `<p>The way out carries six empty slots and a line in `
-          + `${theme.keeper}’s hand:</p>`
-          + '<p><em>“Six marks, six letters. Take the first letter of each, '
-          + 'in the order you found them, and say the word.”</em></p>',
-        media: [],
         answers: [target.toLowerCase()],
-        answerPattern: null,
-        hints: [
-          { text: 'Your “Unlocked so far” list holds all six marks in order. Take each word’s first letter.', penaltySec: 60 },
-          { text: `It begins ${target[0]}, ${target[1]}, ${target[2]}…`, penaltySec: 90 },
-        ],
-        solveMessage:
-          'The slots fill, the lock gives, and the door opens onto ordinary '
-          + `daylight. Whatever happened to ${theme.keeper}, it can wait until you are outside.`,
-      },
+        render: (lang) => {
+          const L = LEX[lang].finale; const v = vocab(theme, lang);
+          return {
+            title: L.title,
+            prompt: L.initials.prompt({ keeper: v.keeper }),
+            hints: [L.initials.nudge(), L.initials.nearly(target[0], target[1], target[2])],
+            solveMessage: L.initials.solve(v.keeper),
+          };
+        },
+      }),
     };
   }
+
   const digits = Array.from({ length: TOKEN_PUZZLES }, () => String(rng.int(0, 9)));
   const code = digits.join('');
   return {
     tokens: digits,
-    puzzle: {
-      id: `p${n}`,
-      title: 'The Last Door',
+    puzzle: build({ theme, n }, {
       type: 'meta',
-      prompt:
-        '<p>The way out has a six-figure dial and a line scratched beside it:</p>'
-        + '<p><em>“Six marks, in the order you found them. Nothing else will turn it.”</em></p>',
-      media: [],
       answers: [code],
       answerPattern: `^${digits.join('\\s*')}$`,
-      hints: [
-        { text: 'Your “Unlocked so far” list holds all six marks, in order.', penaltySec: 60 },
-        { text: `It begins ${digits[0]}, ${digits[1]}, ${digits[2]}…`, penaltySec: 90 },
-      ],
-      solveMessage:
-        'Six figures, one click, and the door swings wide onto ordinary '
-        + `daylight. Whatever happened to ${theme.keeper}, it can wait.`,
-    },
+      render: (lang) => {
+        const L = LEX[lang].finale; const v = vocab(theme, lang);
+        return {
+          title: L.title,
+          prompt: L.code.prompt(),
+          hints: [L.code.nudge(), L.code.nearly(digits[0], digits[1], digits[2])],
+          solveMessage: L.code.solve(v.keeper),
+        };
+      },
+    }),
   };
 }
 
@@ -102,7 +98,12 @@ function generate(seed) {
     slug: 'solo',
     title: theme.title,
     intro: theme.intro,
-    i18n: { es: theme.es, pt: theme.pt },
+    // Title and intro only — the theme's es/pt blocks also carry the room
+    // vocabulary the generator dresses puzzles in, which the client never needs.
+    i18n: {
+      es: { title: theme.es.title, intro: theme.es.intro },
+      pt: { title: theme.pt.title, intro: theme.pt.intro },
+    },
     hidden: false,
     durationMin: DURATION_MIN,
     puzzles,

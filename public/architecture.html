@@ -137,7 +137,7 @@
     <div class="chip"><dt>Game state</dt><dd>Upstash Redis, 6h TTL</dd></div>
     <div class="chip"><dt>History</dt><dd>Neon Postgres, 1 write/game</dd></div>
     <div class="chip"><dt>Auth</dt><dd>Bearer-style tokens, no accounts</dd></div>
-    <div class="chip"><dt>Tests</dt><dd>254 unit + 9 Playwright, gate CI</dd></div>
+    <div class="chip"><dt>Tests</dt><dd>258 unit + 9 Playwright, gate CI</dd></div>
   </dl>
 
   <section>
@@ -489,6 +489,19 @@
         request would be wasted work and, worse, a mid-deploy generator change
         would swap puzzle ids under a live player — which silently blanks the
         solved history the finale depends on.</p>
+      </div>
+      <div class="card">
+        <div class="title">Generated content, localized</div>
+        <p>A generated room cannot be translated the way an authored one is —
+        its sentences do not exist until a seed picks them. So the generator
+        chooses <em>data</em> once (which cipher, which numbers, which corner
+        of the room) and renders that data through one lexicon per language in
+        <code>api/_lib/solo/lang.js</code>. Language never touches the rng, so
+        every run is the same room in all three. Anything drawn from the theme
+        is picked as an <em>index</em> into parallel vocabulary lists, and the
+        Spanish and Portuguese templates write “de el mostrador” with a
+        contraction pass repairing it to “del mostrador” — which keeps the
+        vocabulary lists free of grammar.</p>
       </div>
       <div class="card">
         <div class="title">The seed never leaves the server</div>
