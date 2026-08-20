@@ -1,7 +1,10 @@
-// Interface translations: English, Spanish, Portuguese. Puzzle CONTENT
-// (prompts, hints, answers) stays in the adventure's authored language —
-// only the surrounding interface localizes. Server error messages also
-// arrive in English.
+// Interface translations: English, Spanish, Portuguese.
+//
+// Puzzle CONTENT (titles, prompts, hints, solve messages) is localized by the
+// server — the poll sends `lang` and gets text back in it. Accepted answers
+// are deliberately language-independent, so flipping the toggle mid-run never
+// invalidates an answer a player has already worked out. Server error
+// messages still arrive in English.
 'use strict';
 
 const MESSAGES = {
@@ -255,8 +258,9 @@ function applyI18n() {
   }
 }
 
-// Resolve an adventure's localized title/intro; puzzle content is never
-// localized, so this only ever consults the adventure's i18n block.
+// Resolve an adventure's localized title/intro. The server also localizes
+// these, so this agrees with it; it exists for the lobby and create form,
+// which read the adventure listing directly.
 function advText(adv, field) {
   return adv?.i18n?.[LANG]?.[field] ?? adv?.[field] ?? '';
 }

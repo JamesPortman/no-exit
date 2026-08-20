@@ -10,6 +10,12 @@ functions on Vercel, game state in Upstash Redis (file-store fallback
 locally), results history in Neon Postgres. Clients poll `/api/state` every
 ~2s; there is no websocket.
 
+Interface and puzzle content both localize to English, Spanish and
+Portuguese: the poll carries `lang` and the server renders puzzle text in it.
+Accepted answers deliberately do NOT localize — they are the union across
+every language, so switching mid-run never invalidates an answer a player has
+already worked out. Solo's generated rooms are still rendered in English.
+
 ## Layout
 
 - `api/` — serverless endpoints: `config`, `create`, `solo`, `join`, `state`,
@@ -18,7 +24,9 @@ locally), results history in Neon Postgres. Clients poll `/api/state` every
   (adventure loader + anti-spoiler sanitizer), `ratelimit.js`
 - `content/adventures/` — plaintext fixtures only (`test-adventure`,
   `test-long`). They document the format and keep the engine testable in a
-  clone with no key. See `content/adventures/_schema.md` to author one.
+  clone with no key. `test-adventure` is translated, so the E2E suite can
+  prove the language toggle reaches puzzle text without the key. See
+  `content/adventures/_schema.md` to author or translate one.
 - `api/_lib/solo/` — the Solo generator: a pure function of a seed that
   builds a themed, seven-puzzle room on demand. See `/architecture`.
 - `content/solo/riddles.enc` — sealed bank of 80 riddles used by Solo when a

@@ -126,8 +126,8 @@
       of Vercel serverless functions keeps game state in Upstash Redis
       (auto-expiring), writes one results row per team to Neon Postgres when
       a game ends, and enforces the one inviolable rule: <em>puzzle answers
-      never leave the server</em>. Interface localizes to English, Spanish,
-      and Portuguese; puzzle content is English. Ten adventures ship in the
+      never leave the server</em>. Interface <em>and puzzle content</em>
+      localize to English, Spanish and Portuguese. Ten adventures ship in the
       repo as encrypted content, opened at runtime with a key held outside it.
     </p>
   </div>
@@ -137,7 +137,7 @@
     <div class="chip"><dt>Game state</dt><dd>Upstash Redis, 6h TTL</dd></div>
     <div class="chip"><dt>History</dt><dd>Neon Postgres, 1 write/game</dd></div>
     <div class="chip"><dt>Auth</dt><dd>Bearer-style tokens, no accounts</dd></div>
-    <div class="chip"><dt>Tests</dt><dd>142 unit + 8 Playwright, gate CI</dd></div>
+    <div class="chip"><dt>Tests</dt><dd>254 unit + 9 Playwright, gate CI</dd></div>
   </dl>
 
   <section>
@@ -406,12 +406,29 @@
         extrapolates between polls, so clock skew on a player's machine never
         shows a wrong countdown. Client-side 5-minute and 1-minute warnings
         fire from the same anchor, localized per player.</li>
-      <li><strong>i18n.</strong> Interface strings ship as EN/ES/PT
+      <li><strong>i18n, interface.</strong> Interface strings ship as EN/ES/PT
         dictionaries (<code>public/js/i18n.js</code>); static markup uses
         <code>data-i18n</code> attributes, dynamic strings go through
         <code>t()</code>. A test enforces identical key sets and placeholder
-        parity across locales. Puzzle content stays English by design —
-        localized adventures would be authored natively, not translated.</li>
+        parity across locales.</li>
+      <li><strong>i18n, puzzle content.</strong> All 100 authored puzzles carry
+        a per-puzzle <code>i18n</code> block. The poll sends
+        <code>lang</code>; the server localizes titles, prompts, hints and
+        solve messages at read time and falls back field by field, so a partial
+        translation degrades to English rather than to blanks. The one rule
+        that makes this safe: <em>accepted answers do not localize</em> — they
+        are the union across every language. The toggle is a display choice a
+        player can flip mid-run, and an answer they already derived must not
+        stop being correct because they switched.</li>
+      <li><strong>What translation must not touch.</strong> Every adventure's
+        finale reads marks out of earlier solve messages — crew words, sigil
+        letters, tally figures, Roman numerals. Translate one and the finale
+        breaks in that language only, which no English-only test would catch.
+        So the marks and the embedded artefacts (ciphertext, anagram tiles,
+        acrostic lines) stay exactly as authored, and a test re-derives every
+        chain in all three languages. Where a mechanic simply cannot survive —
+        an English-only pun such as Today/Tomorrow both starting with T — the
+        puzzle is re-authored for that language rather than translated.</li>
       <li><strong>Theme &amp; art.</strong> A day/night toggle swaps CSS
         variables; each adventure maps to a hand-drawn SVG scene rendered as
         a fixed background layer, drawn in translucent midtones so one file

@@ -5,7 +5,7 @@ const {
   loadGame, loadTeam, maybeExpire, elapsedMs, rankTeams, adventureFor,
   playersKey, logKey, sendJSON, TTL_SEC,
 } = require('./_lib/games.js');
-const { playerView } = require('./_lib/content.js');
+const { playerView, localizeAdventure, langOf } = require('./_lib/content.js');
 const { recordResultsOnce } = require('./_lib/db.js');
 
 module.exports = async (req, res) => {
@@ -35,7 +35,9 @@ module.exports = async (req, res) => {
 
   meta = await maybeExpire(meta);
   await recordResultsOnce(meta); // no-op unless just finished and unrecorded
-  const adventure = adventureFor(meta);
+  // Puzzle text is localized at read time; answers are language-independent
+  // (see content.js), so nothing about scoring depends on this.
+  const adventure = localizeAdventure(adventureFor(meta), langOf(req));
   const now = Date.now();
   const elapsed = elapsedMs(meta, now);
 

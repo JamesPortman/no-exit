@@ -87,3 +87,47 @@ bank rather than a generator.
   room the run picked — and must never name a setting, character or prop.
 - Riddles are optional: CI runs the E2E suite with no key, so the generator has
   to produce a complete run without them. Never make one structurally required.
+
+## Translating a puzzle
+
+Each puzzle may carry an `i18n` block. Presentation localizes; the machinery
+does not.
+
+```js
+i18n: {
+  es: {
+    title: 'La Puerta de Servicio',
+    prompt: '<p>…</p>',
+    answers: ['tu nombre'],   // ADDITIVE — never replaces the authored answers
+    hints: [{ text: '…' }, { text: '…' }],  // penalties are never localized
+    solveMessage: '… “crew word — GLASS”.', // the mark stays byte-identical
+  },
+  pt: { … },
+}
+```
+
+Rules, all enforced by `__tests__/i18n-content.test.js`:
+
+- **Never translate a chain mark.** The finale reads marks out of earlier solve
+  messages — `crew word — GLASS`, `sigil O — 2 drops`, `letter — N`,
+  `tally — 3`, a Roman numeral. Translate one and the finale breaks in that
+  language only. If a room uses capitals purely for emphasis and carries its
+  chain in figures, set `marksAreDigitsOnly: true` on that puzzle's
+  translation and the figures are still compared exactly.
+- **Never translate an artefact.** Ciphertext, anagram tiles, acrostic lines
+  and word-bank blanks are the puzzle, not prose. Translate the framing around
+  them.
+- **Answers are additive and language-independent.** `answersFor()` unions
+  every language's answers, because the toggle is a display choice a player can
+  flip mid-run.
+- **A translated answer must not appear in its own translated prompt.** The
+  leak test checks each language separately; a natural phrasing in one language
+  can give the answer away where the English does not.
+- **Translate all languages or none.** A half-translated adventure gives the
+  player a toggle that only sometimes works.
+- **Re-author what cannot survive.** A pun that only works in English (Today
+  and Tomorrow both starting with T) should become a different question with
+  the same answer and difficulty — not a literal translation of a broken joke.
+
+Author translations in `content/source/<slug>/i18n.js` and merge them with
+`withI18n()`; `npm run seal` captures the merged result.

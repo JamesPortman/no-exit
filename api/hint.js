@@ -5,6 +5,7 @@ const {
   loadTeam, saveTeam, maybeExpire, adventureFor, appendLog, sendJSON,
   requirePlayer,
 } = require('./_lib/games.js');
+const { localizeAdventure, langOf } = require('./_lib/content.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
@@ -17,7 +18,7 @@ module.exports = async (req, res) => {
     return sendJSON(res, 400, { error: `game is ${meta.state}` });
   }
 
-  const adventure = adventureFor(meta);
+  const adventure = localizeAdventure(adventureFor(meta), langOf(req));
   const team = await loadTeam(meta.code, player.teamId);
   const current = adventure.puzzles[team.puzzleIdx];
   const { puzzleId } = req.body || {};

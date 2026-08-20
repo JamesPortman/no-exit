@@ -67,6 +67,77 @@ function listAdventures({ includeHidden = false } = {}) {
     }));
 }
 
+// ---------------------------------------------------------------------------
+// Localization.
+//
+// Puzzle content is authored in English and may carry a per-language `i18n`
+// block. Two rules keep this honest:
+//
+//   1. Presentation localizes field by field, so a partly translated puzzle
+//      degrades to English rather than to blanks.
+//   2. ACCEPTED ANSWERS DO NOT LOCALIZE — they are the union across every
+//      language. The interface language is a client-side toggle a player can
+//      flip mid-run; an answer they already derived must not stop being
+//      correct because they switched. It also keeps the host's crib sheet
+//      complete without the host having to guess a team's language.
+const LANGS = ['en', 'es', 'pt'];
+
+function langOf(req) {
+  const raw = (req.query && req.query.lang) || (req.body && req.body.lang) || 'en';
+  const l = String(raw).slice(0, 2).toLowerCase();
+  return LANGS.includes(l) ? l : 'en';
+}
+
+function answersFor(puzzle) {
+  const out = [...(puzzle.answers || [])];
+  for (const l of LANGS) {
+    const t = puzzle.i18n && puzzle.i18n[l];
+    if (t && t.answers) out.push(...t.answers);
+  }
+  return [...new Set(out)];
+}
+
+// Each authored pattern is anchored, so alternation composes them safely.
+function patternFor(puzzle) {
+  const pats = [puzzle.answerPattern];
+  for (const l of LANGS) {
+    const t = puzzle.i18n && puzzle.i18n[l];
+    if (t && t.answerPattern) pats.push(t.answerPattern);
+  }
+  const kept = [...new Set(pats.filter(Boolean))];
+  if (!kept.length) return null;
+  return kept.length === 1 ? kept[0] : kept.map((x) => `(?:${x})`).join('|');
+}
+
+function localizePuzzle(puzzle, lang) {
+  const t = lang && lang !== 'en' && puzzle.i18n ? puzzle.i18n[lang] : null;
+  const base = { ...puzzle, answers: answersFor(puzzle), answerPattern: patternFor(puzzle) };
+  if (!t) return base;
+  const hints = (puzzle.hints || []).map((h, i) => {
+    const th = t.hints && t.hints[i];
+    return th ? { ...h, text: typeof th === 'string' ? th : th.text } : h;
+  });
+  return {
+    ...base,
+    title: t.title || puzzle.title,
+    prompt: t.prompt || puzzle.prompt,
+    solveMessage: t.solveMessage || puzzle.solveMessage,
+    hints,
+  };
+}
+
+// The adventure a player actually sees. Callers pass the language from the
+// request; `en` returns content as authored (with answers still unioned).
+function localizeAdventure(adventure, lang) {
+  const t = lang && lang !== 'en' && adventure.i18n ? adventure.i18n[lang] : null;
+  return {
+    ...adventure,
+    title: (t && t.title) || adventure.title,
+    intro: (t && t.intro) || adventure.intro,
+    puzzles: adventure.puzzles.map((p) => localizePuzzle(p, lang)),
+  };
+}
+
 // Player-safe view of a single puzzle: no answers, no answerPattern, no hint
 // text, no solveMessage.
 function sanitizePuzzle(puzzle) {
@@ -109,4 +180,5 @@ function playerView(adventure, teamState) {
 
 module.exports = {
   getAdventure, listAdventures, sanitizePuzzle, playerView, resetCache,
+  LANGS, langOf, answersFor, patternFor, localizePuzzle, localizeAdventure,
 };

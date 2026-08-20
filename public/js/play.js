@@ -222,7 +222,7 @@ function render(s) {
   if (hb) hb.onclick = async () => {
     if (!confirm(t('play.confirmHint', nextIdx + 1, p.hintPenaltiesSec[nextIdx]))) return;
     hb.disabled = true;
-    try { await api('/api/hint', { code, playerId: session.playerId, token: session.token, puzzleId: p.id }); await poll(); }
+    try { await api('/api/hint', { code, playerId: session.playerId, token: session.token, puzzleId: p.id, lang: LANG }); await poll(); }
     catch (e) { $('feedback').textContent = e.message; }
   };
 }
@@ -235,7 +235,7 @@ async function submitGuess() {
   try {
     const r = await api('/api/answer', {
       code, playerId: session.playerId, token: session.token,
-      puzzleId: lastPuzzleId, guess,
+      puzzleId: lastPuzzleId, guess, lang: LANG,
     });
     if (r.correct) {
       $('feedback').textContent = r.finished ? t('play.lastOne') : t('play.correct');
@@ -258,7 +258,10 @@ $('guess').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitGue
 
 async function poll() {
   try {
-    let url = `/api/state?code=${code}&playerId=${session.playerId}&token=${encodeURIComponent(session.token)}`;
+    // LANG is a global from i18n.js. The server renders puzzle text in it;
+    // scoring is unaffected, so switching mid-run is safe.
+    let url = `/api/state?code=${code}&playerId=${session.playerId}`
+      + `&token=${encodeURIComponent(session.token)}&lang=${LANG}`;
     const reporting = Math.round(awayMs);
     if (reporting > sentAwayMs) url += `&awayMs=${reporting}`;
     const s = await api(url);
@@ -277,5 +280,10 @@ async function poll() {
     }
   }
 }
+// Switching language re-fetches so the current puzzle, its revealed hints and
+// every solve message already on screen redraw in the new language. The typed
+// guess survives: render() only clears the input when the puzzle id changes.
+document.addEventListener('langchange', () => { poll(); });
+
 poll();
 setInterval(poll, 2000);

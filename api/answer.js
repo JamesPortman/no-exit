@@ -7,6 +7,7 @@ const {
 } = require('./_lib/games.js');
 const { rateLimitKey } = require('./_lib/ratelimit.js');
 const { recordSoloScore } = require('./_lib/db.js');
+const { localizeAdventure, langOf } = require('./_lib/content.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
@@ -21,7 +22,7 @@ module.exports = async (req, res) => {
 
   if (!(await rateLimitKey(res, `answer:${meta.code}:${player.teamId}`, 15, 60))) return;
 
-  const adventure = adventureFor(meta);
+  const adventure = localizeAdventure(adventureFor(meta), langOf(req));
   const team = await loadTeam(meta.code, player.teamId);
   if (team.finishedAtMs != null) {
     return sendJSON(res, 400, { error: 'your team already escaped!' });
