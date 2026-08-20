@@ -11,6 +11,28 @@ const timer = makeTimer($('timer'));
 let lastPuzzleId = null;
 let submitting = false;
 
+// Feedback line. A correct answer advances the puzzle, and render() clears
+// this line whenever the puzzle id changes — so the “✔ Correct!” confirmation
+// used to be wiped by the poll that the answer itself triggered, usually
+// within milliseconds of appearing. A held message survives that one
+// transition, then clears itself.
+const FEEDBACK_HOLD_MS = 3500;
+let feedbackHeldUntil = 0;
+let feedbackTimer = null;
+
+function setFeedback(text, cls, hold = false) {
+  $('feedback').textContent = text;
+  $('feedback').className = cls ? `feedback ${cls}` : 'feedback';
+  clearTimeout(feedbackTimer);
+  feedbackHeldUntil = hold ? Date.now() + FEEDBACK_HOLD_MS : 0;
+  if (!hold) return;
+  feedbackTimer = setTimeout(() => {
+    feedbackHeldUntil = 0;
+    // Only clear what we put there — the player may have guessed again since.
+    if ($('feedback').textContent === text) setFeedback('', '');
+  }, FEEDBACK_HOLD_MS);
+}
+
 // Off-tab tracking (as in Terra Incognita): accumulate time this player
 // spends away from the tab while the game is running; the poll reports it
 // and the host console / final ranking show it when it's more than zero.
@@ -202,8 +224,8 @@ function render(s) {
     // guess mid-typing on a poll.
     lastPuzzleId = p.id;
     $('guess').value = '';
-    $('feedback').textContent = '';
-    $('feedback').className = 'feedback';
+    // A confirmation earned a moment ago outlives the advance it caused.
+    if (Date.now() >= feedbackHeldUntil) setFeedback('', '');
   }
   $('puzzle-title').textContent = `${team.puzzleIdx + 1}. ${p.title}`;
   $('puzzle-prompt').innerHTML = p.prompt; // authored trusted HTML
@@ -223,7 +245,7 @@ function render(s) {
     if (!confirm(t('play.confirmHint', nextIdx + 1, p.hintPenaltiesSec[nextIdx]))) return;
     hb.disabled = true;
     try { await api('/api/hint', { code, playerId: session.playerId, token: session.token, puzzleId: p.id, lang: LANG }); await poll(); }
-    catch (e) { $('feedback').textContent = e.message; }
+    catch (e) { setFeedback(e.message, 'bad'); }
   };
 }
 
@@ -238,16 +260,13 @@ async function submitGuess() {
       puzzleId: lastPuzzleId, guess, lang: LANG,
     });
     if (r.correct) {
-      $('feedback').textContent = r.finished ? t('play.lastOne') : t('play.correct');
-      $('feedback').className = 'feedback good';
+      setFeedback(r.finished ? t('play.lastOne') : t('play.correct'), 'good', true);
     } else if (!r.stale) {
-      $('feedback').textContent = t('play.wrong');
-      $('feedback').className = 'feedback bad';
+      setFeedback(t('play.wrong'), 'bad');
     }
     await poll();
   } catch (e) {
-    $('feedback').textContent = e.message;
-    $('feedback').className = 'feedback bad';
+    setFeedback(e.message, 'bad');
   } finally {
     submitting = false;
     $('submit').disabled = false;

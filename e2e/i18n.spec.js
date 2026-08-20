@@ -31,11 +31,17 @@ test('switching language re-renders the puzzle, and answers still work', async (
 
   // An answer from ANOTHER language is still accepted: the toggle is a display
   // choice and must never invalidate something the player already worked out.
-  // Assert on state that persists — the "Correct!" flash is wiped by the very
-  // next poll, because advancing to a new puzzle resets the feedback line.
   await page.fill('#guess', 'short');
   await page.click('#submit');
+
+  // The confirmation has to survive the puzzle advance it just caused —
+  // rendering the next puzzle clears the feedback line, which used to wipe
+  // this within milliseconds of it appearing.
+  await expect(page.locator('#feedback')).toHaveClass(/good/);
   await expect(page.locator('#puzzle-title')).toContainText('O Meta');
+
+  // …and then let go of it on its own, rather than sitting on the new puzzle.
+  await expect(page.locator('#feedback')).toHaveText('', { timeout: 8000 });
 
   // The solve message the player keeps is in their chosen language.
   await expect(page.locator('#solved-log')).toContainText('seu primeiro dígito');
