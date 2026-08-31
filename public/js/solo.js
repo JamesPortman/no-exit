@@ -59,7 +59,7 @@ $('solo-start').addEventListener('click', async () => {
     const run = await api('/api/solo', { name: chosen || undefined });
     // play.js boots from this session; without it the page bounces to /join.
     saveSession({ code: run.code, playerId: run.playerId, token: run.token, name: chosen });
-    location.assign(`/play.html?code=${run.code}`);
+    location.assign(url(`/play.html?code=${run.code}`));
   } catch (e) {
     $('solo-error').textContent = e.message;
     $('solo-start').disabled = false;

@@ -1,11 +1,19 @@
 // Shared client helpers: API calls, session storage, time formatting.
 'use strict';
 
+// The path prefix this deployment is served under: empty at a domain root, "/no-exit"
+// when portman.ca proxies the app as a subpath. Derived from the URL at runtime rather
+// than baked in at build time, so one deployment serves both without a build flag.
+const BASE = /^\/no-exit(\/|$)/.test(location.pathname) ? '/no-exit' : '';
+
+// Turn a root-relative app path into one that survives the prefix.
+const url = (path) => BASE + path;
+
 async function api(path, body) {
   const opts = body
     ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
     : {};
-  const res = await fetch(path, opts);
+  const res = await fetch(url(path), opts);
   let data = {};
   try { data = await res.json(); } catch {}
   if (!res.ok) throw new Error(data.error || `request failed (${res.status})`);

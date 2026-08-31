@@ -45,17 +45,17 @@ body::before {
   opacity: var(--bg-art-opacity);
   pointer-events: none;
 }
-body[data-bg="default"]::before { background-image: url("/backgrounds/default.svg"); }
-body[data-bg="midnight-heist"]::before { background-image: url("/backgrounds/midnight-heist.svg"); }
-body[data-bg="lighthouse-vigil"]::before { background-image: url("/backgrounds/lighthouse-vigil.svg"); }
-body[data-bg="last-carriage"]::before { background-image: url("/backgrounds/last-carriage.svg"); }
-body[data-bg="silent-observatory"]::before { background-image: url("/backgrounds/silent-observatory.svg"); }
-body[data-bg="curio-shop"]::before { background-image: url("/backgrounds/curio-shop.svg"); }
-body[data-bg="alchemists-cellar"]::before { background-image: url("/backgrounds/alchemists-cellar.svg"); }
-body[data-bg="signal-deep"]::before { background-image: url("/backgrounds/signal-deep.svg"); }
-body[data-bg="clockmakers-attic"]::before { background-image: url("/backgrounds/clockmakers-attic.svg"); }
-body[data-bg="the-last-reel"]::before { background-image: url("/backgrounds/the-last-reel.svg"); }
-body[data-bg="cartographers-study"]::before { background-image: url("/backgrounds/cartographers-study.svg"); }
+body[data-bg="default"]::before { background-image: url("../backgrounds/default.svg"); }
+body[data-bg="midnight-heist"]::before { background-image: url("../backgrounds/midnight-heist.svg"); }
+body[data-bg="lighthouse-vigil"]::before { background-image: url("../backgrounds/lighthouse-vigil.svg"); }
+body[data-bg="last-carriage"]::before { background-image: url("../backgrounds/last-carriage.svg"); }
+body[data-bg="silent-observatory"]::before { background-image: url("../backgrounds/silent-observatory.svg"); }
+body[data-bg="curio-shop"]::before { background-image: url("../backgrounds/curio-shop.svg"); }
+body[data-bg="alchemists-cellar"]::before { background-image: url("../backgrounds/alchemists-cellar.svg"); }
+body[data-bg="signal-deep"]::before { background-image: url("../backgrounds/signal-deep.svg"); }
+body[data-bg="clockmakers-attic"]::before { background-image: url("../backgrounds/clockmakers-attic.svg"); }
+body[data-bg="the-last-reel"]::before { background-image: url("../backgrounds/the-last-reel.svg"); }
+body[data-bg="cartographers-study"]::before { background-image: url("../backgrounds/cartographers-study.svg"); }
 
 /* Language + theme controls, top-right of every page */
 .chrome-bar {

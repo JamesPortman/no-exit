@@ -137,7 +137,7 @@ function renderSoloResult(s) {
     ${!isNewBest && best && best.ms
       ? `<p class="muted small" style="text-align:center">${t('solo.toBeat', fmtMs(best.ms))}</p>` : ''}
     <p style="text-align:center;margin-top:14px">
-      <a href="/solo.html" style="color:var(--accent)">${t('solo.again')}</a></p>`;
+      <a href="${url('/solo.html')}" style="color:var(--accent)">${t('solo.again')}</a></p>`;
 }
 
 function render(s) {
@@ -229,8 +229,10 @@ function render(s) {
   }
   $('puzzle-title').textContent = `${team.puzzleIdx + 1}. ${p.title}`;
   $('puzzle-prompt').innerHTML = p.prompt; // authored trusted HTML
+  // Adventure content stores media as site-root paths (/puzzles/...); url() re-points
+  // them at this deployment's prefix so they load when the app is served as a subpath.
   $('puzzle-media').innerHTML = (p.media || [])
-    .map((m) => `<img src="${m}" alt="puzzle image" loading="lazy">`).join('');
+    .map((m) => `<img src="${m.startsWith('/') ? url(m) : m}" alt="puzzle image" loading="lazy">`).join('');
 
   $('hints').innerHTML = team.revealedHints
     .map((h, i) => `<div class="hint-box">${t('play.hintN', i + 1, esc(h))}</div>`).join('');
