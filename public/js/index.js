@@ -51,7 +51,7 @@ async function lookup() {
     lookedUp = await api(`/api/lookup?code=${code}`);
     // Already in this game? Straight back to the play screen.
     const existing = loadSession(code);
-    if (existing?.playerId) return location.assign(`/play.html?code=${code}`);
+    if (existing?.playerId) return location.assign(url(`/play.html?code=${code}`));
     $('join-title').textContent = t('join.pickTeam', advText(lookedUp, 'title'));
     $('join-teams').innerHTML = lookedUp.teams.map((t, i) => `
       <label style="display:flex;align-items:center;gap:8px;margin:6px 0">
@@ -76,7 +76,7 @@ $('join-btn').addEventListener('click', async () => {
   try {
     const joined = await api('/api/join', { code, name, teamId });
     saveSession({ code, ...joined, name });
-    location.assign(`/play.html?code=${code}`);
+    location.assign(url(`/play.html?code=${code}`));
   } catch (e) {
     $('join-error').textContent = e.message;
     $('join-btn').disabled = false;
@@ -188,7 +188,7 @@ $('create-btn').addEventListener('click', async () => {
       adminToken: $('admin-token').value.trim() || undefined,
     });
     localStorage.setItem(`escape:host:${game.code}`, game.hostToken);
-    location.assign(`/host.html?code=${game.code}`);
+    location.assign(url(`/host.html?code=${game.code}`));
   } catch (e) {
     $('create-error').textContent = e.message;
     $('create-btn').disabled = false;

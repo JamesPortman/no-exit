@@ -11,7 +11,7 @@ const hostToken = code && localStorage.getItem(`escape:host:${code}`);
 if (!code || !hostToken) {
   document.body.innerHTML =
     '<div class="wrap"><div class="card">No host token for this game. ' +
-    'Create a game from the <a href="/">landing page</a>, or open the exact ' +
+    `Create a game from the <a href="${url('/')}">landing page</a>, or open the exact ` +
     'console link you saved.</div></div>';
   throw new Error('no host session');
 }

@@ -46,6 +46,20 @@ lexicon, so a run is the same room — same mechanic, same numbers, same answer
 - `public/index.html` / `play.html` / `host.html` — join page, player screen, host
   console (static, no build step)
 
+## Serving under a path prefix
+
+The app runs at a domain root (its own Vercel URL) and also under a prefix, where
+`www.portman.ca/no-exit/` proxies it. Nothing is configured for this: `js/api.js`
+reads the prefix off `location.pathname` into `BASE` and every API call and
+script-driven navigation goes through `url()`. Static markup uses relative paths
+(`js/api.js`, not `/js/api.js`) and the stylesheet reaches backgrounds via
+`../backgrounds/`, so both forms resolve the same way. Puzzle `media` paths, which
+live in sealed content as site-root URLs, are re-pointed through `url()` at render.
+
+The one requirement is a trailing slash: the prefix must be served as `/no-exit/`,
+so relative markup resolves inside it. portman.ca redirects `/no-exit` to `/no-exit/`
+for this reason. Adding a new page or asset means using a relative path for it.
+
 ## Develop
 
 ```bash
