@@ -1,6 +1,6 @@
 # Escape Room
 
-A self-hosted virtual escape room for remote team events: 6–15 players on a
+A self-hosted virtual escape room for remote team events: 6–16 players on a
 video call split into 2–3 competing teams (Zoom breakout rooms), racing
 through the same 30-minute puzzle adventure while the host watches progress,
 nudges with hints, and calls the winner.
