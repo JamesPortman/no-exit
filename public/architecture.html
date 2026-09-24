@@ -122,7 +122,7 @@
       16 players on a video call split into 2–3 competing teams, racing the
       same 30-minute, ten-puzzle adventure while a host watches progress and
       dispenses hints. The client is three static HTML pages (join, play,
-      host console) with vanilla JS — no framework, no build step. A thin set
+      host console), plus solo and history, with vanilla JS — no framework, no build step. A thin set
       of Vercel serverless functions keeps game state in Upstash Redis
       (auto-expiring), writes one results row per team to Neon Postgres when
       a game ends, and enforces the one inviolable rule: <em>puzzle answers
@@ -267,7 +267,7 @@
       <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs}</code>. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
       <tr><td>game:CODE:team:ID</td><td>Per-team progress: <code>puzzleIdx</code>, solves (with elapsed-ms stamps), <code>hintsTaken</code> per puzzle, <code>penaltyMs</code>, <code>wrongCount</code>, <code>finishedAtMs</code>.</td></tr>
       <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, host actions), capped at 200 entries.</td></tr>
-      <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/join/lookup/history, per-<em>team</em> (15/min) on answer attempts.</td></tr>
+      <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/solo/join/lookup/history/leaderboard, per-<em>team</em> (15/min) on answer attempts.</td></tr>
     </table>
     <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
       All keys carry a 6-hour TTL — a finished game simply evaporates.
@@ -379,8 +379,8 @@
       <div class="card">
         <div class="title">Rate limits</div>
         <p>Answer attempts: 15/minute <em>per team</em> in Redis — no
-        brute-forcing puzzles. Create/join/lookup/history: fixed-window
-        per-IP. Loopback traffic without a proxy header is exempt so local
+        brute-forcing puzzles. Create/solo/join/lookup/history/leaderboard:
+        fixed-window per-IP. Loopback traffic without a proxy header is exempt so local
         dev and E2E never throttle; real Vercel traffic always carries
         <code>x-forwarded-for</code>.</p>
       </div>
@@ -429,6 +429,19 @@
         chain in all three languages. Where a mechanic simply cannot survive —
         an English-only pun such as Today/Tomorrow both starting with T — the
         puzzle is re-authored for that language rather than translated.</li>
+      <li><strong>Served at a root or under a prefix.</strong> The same
+        deployment answers at its own domain root and behind
+        <code>www.portman.ca/no-exit/</code>. Nothing is configured for it:
+        <code>public/js/api.js</code> reads the prefix off
+        <code>location.pathname</code> into <code>BASE</code>, and every API
+        call and script-driven navigation goes through <code>url()</code>.
+        Static markup uses relative paths (<code>js/api.js</code>, not
+        <code>/js/api.js</code>) and the stylesheet reaches its backgrounds
+        via <code>../backgrounds/</code>, so both forms resolve alike. Puzzle
+        <code>media</code> is the exception — sealed content stores it as
+        site-root paths, so it is re-pointed through <code>url()</code> at
+        render. The prefix must be served with its trailing slash
+        (<code>/no-exit/</code>) for the relative paths to land inside it.</li>
       <li><strong>Theme &amp; art.</strong> A day/night toggle swaps CSS
         variables; each adventure maps to a hand-drawn SVG scene rendered as
         a fixed background layer, drawn in translucent midtones so one file
@@ -445,12 +458,13 @@
       <div class="card">
         <div class="title">Every push</div>
         <ol>
-          <li>142 Vitest unit tests — engine, timing, sanitizer leak checks,
+          <li>258 Vitest unit tests — engine, timing, sanitizer leak checks,
             content schema + meta chains, i18n parity, host tools — run
             against the file store (no cloud needed).</li>
           <li>Playwright drives a real multi-team game through the actual UI:
             host + two player browsers, wrong answer, hint, pause,
-            force-advance, ranking, refresh-resume.</li>
+            force-advance, ranking, refresh-resume. Further specs cover the
+            create form, the language toggle and a seeded solo run.</li>
         </ol>
       </div>
       <div class="card">
@@ -466,8 +480,9 @@
     </div>
     <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
       Environment: <code>KV_REST_API_URL/TOKEN</code> (Upstash),
-      <code>DATABASE_URL</code> (Neon), <code>ADMIN_TOKEN</code>. All three
-      absent locally — file store + skipped history writes keep every feature
+      <code>DATABASE_URL</code> (Neon), <code>ADMIN_TOKEN</code>,
+      <code>ADVENTURE_KEY</code>. All four can be absent locally — file store,
+      skipped history writes and the plaintext fixtures keep every feature
       testable offline.
     </p>
   </section>
@@ -553,10 +568,10 @@
 
   <section>
     <h2>9 · Repository map</h2>
-    <pre class="repomap">EscapeRoom/
+    <pre class="repomap">no-exit/
 ├── public/                     # everything Vercel serves statically
-│   ├── index.html · play.html · host.html · history.html · architecture.html
-│   ├── js/                     # api client, i18n, ui chrome, effects, per-page logic
+│   ├── index.html · play.html · host.html · solo.html · history.html · architecture.html
+│   ├── js/                     # api client (BASE + url()), i18n, ui chrome, effects, per-page logic
 │   ├── css/style.css           # theme variables (night/day) + all styling
 │   ├── backgrounds/            # one hand-drawn SVG scene per adventure
 │   └── puzzles/&lt;slug&gt;/         # images referenced by puzzle prompts
@@ -569,16 +584,17 @@
 │       ├── games.js            # engine: codes, timing, ranking, answer checking
 │       ├── content.js          # adventure loader + anti-spoiler sanitizer
 │       ├── ratelimit.js        # fixed-window IP + team limiters (from TI)
+│       ├── seal.js             # AES-256-GCM encrypt/decrypt, ADVENTURE_KEY
 │       ├── riddles.js          # sealed riddle bank loader (optional)
-│       ├── solo/               # the generator: rng · themes · families · words
+│       ├── solo/               # the generator: generate · rng · themes · families · words · lang
 │       └── db.js               # Neon writer: game_results + solo_scores
 ├── content/adventures/         # plaintext fixtures + authoring guide
 ├── content/sealed/             # the ten real adventures, AES-256-GCM
 ├── content/solo/riddles.enc    # sealed riddle bank for generated runs
 ├── content/source/             # gitignored plaintext working copies
 ├── scripts/{seal,unseal}.js    # encrypt for commit / recover from ciphertext
-├── __tests__/                  # 142 Vitest specs (real handlers, file store)
-├── e2e/                        # Playwright: full game · create form · solo
+├── __tests__/                  # 258 Vitest specs (real handlers, file store)
+├── e2e/                        # Playwright: full game · create form · i18n · solo
 ├── dev-server.js               # local static + api host on :3400
 └── .github/workflows/ci.yml    # test gate → prebuilt production deploy</pre>
   </section>

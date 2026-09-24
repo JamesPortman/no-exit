@@ -21,10 +21,11 @@ lexicon, so a run is the same room — same mechanic, same numbers, same answer
 
 ## Layout
 
-- `api/` — serverless endpoints: `config`, `create`, `solo`, `join`, `state`,
-  `answer`, `hint`, `host`
+- `api/` — serverless endpoints: `config`, `lookup`, `create`, `solo`, `join`,
+  `state`, `answer`, `hint`, `host`, `leaderboard`, `history`
 - `api/_lib/` — `store.js` (KV), `games.js` (engine), `content.js`
-  (adventure loader + anti-spoiler sanitizer), `ratelimit.js`
+  (adventure loader + anti-spoiler sanitizer), `ratelimit.js`, `seal.js`
+  (AES-256-GCM), `riddles.js` (sealed riddle bank), `db.js` (Neon)
 - `content/adventures/` — plaintext fixtures only (`test-adventure`,
   `test-long`). They document the format and keep the engine testable in a
   clone with no key. `test-adventure` is translated, so the E2E suite can
@@ -44,7 +45,8 @@ lexicon, so a run is the same room — same mechanic, same numbers, same answer
   encrypts them into `content/sealed/`; `npm run unseal` recovers them from
   ciphertext given the key.
 - `public/index.html` / `play.html` / `host.html` — join page, player screen, host
-  console (static, no build step)
+  console (static, no build step); `solo.html`, `history.html` and
+  `architecture.html` (served at `/architecture`) alongside
 
 ## Serving under a path prefix
 
