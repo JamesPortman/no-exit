@@ -133,7 +133,7 @@ function render(s) {
   timer.update(s);
   $('adventure-title').textContent = `${s.adventure.title} — ${s.state}`;
   $('code-display').textContent = code;
-  const link = `${location.origin}/?join=${code}`;
+  const link = `${location.origin}${url(`/?join=${code}`)}`;
   $('join-link').innerHTML = `<a href="${link}" style="color:var(--accent)">${link}</a>`;
   renderControls(s.state);
   renderTeams(s);

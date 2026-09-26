@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const { getStore } = require('./store.js');
 const { getAdventure } = require('./content.js');
+const { playerFor } = require('./auth.js');
 
 const MAX_PLAYERS = 16;
 const MAX_TEAMS = 3;
@@ -165,8 +166,8 @@ async function requirePlayer(req, res) {
     return null;
   }
   const players = await getStore().hgetallJSON(playersKey(code));
-  const player = playerId && players[playerId];
-  if (!player || player.token !== token) {
+  const player = playerFor(players, playerId, token);
+  if (!player) {
     sendJSON(res, 403, { error: 'not in this game' });
     return null;
   }

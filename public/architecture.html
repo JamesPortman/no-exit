@@ -373,8 +373,12 @@
         <p><code>hostToken</code> (UUID) is minted at creation;
         players get a per-player UUID token at join, held in
         <code>localStorage</code> for refresh survival. Every endpoint checks
-        the caller's token against Redis. <code>ADMIN_TOKEN</code> (env)
-        gates game creation and the history page.</p>
+        the caller's token against Redis, in constant time, and roster
+        lookups only match the game's own player ids. <code>ADMIN_TOKEN</code>
+        (env) gates game creation, the history page and leaderboard removals,
+        and fails closed: unset, history and removals refuse everyone, and
+        creation is open only off Vercel (local dev) — any deployment without
+        it refuses to create games.</p>
       </div>
       <div class="card">
         <div class="title">Rate limits</div>
@@ -483,7 +487,8 @@
       <code>DATABASE_URL</code> (Neon), <code>ADMIN_TOKEN</code>,
       <code>ADVENTURE_KEY</code>. All four can be absent locally — file store,
       skipped history writes and the plaintext fixtures keep every feature
-      testable offline.
+      testable offline (history needs <code>ADMIN_TOKEN</code> to be read).
+      A deployment needs <code>ADMIN_TOKEN</code> to create games at all.
     </p>
   </section>
 

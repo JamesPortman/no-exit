@@ -7,6 +7,7 @@ const {
 } = require('./_lib/games.js');
 const { playerView, localizeAdventure, langOf } = require('./_lib/content.js');
 const { recordResultsOnce } = require('./_lib/db.js');
+const { safeEqual, playerFor } = require('./_lib/auth.js');
 
 module.exports = async (req, res) => {
   const code = String(req.query.code || '').toUpperCase();
@@ -17,9 +18,9 @@ module.exports = async (req, res) => {
 
   const store = getStore();
   const players = await store.hgetallJSON(playersKey(code));
-  const isHost = hostToken && hostToken === meta.hostToken;
-  const player = playerId && players[playerId];
-  const isPlayer = player && player.token === token;
+  const isHost = safeEqual(hostToken, meta.hostToken);
+  const player = playerFor(players, playerId, token);
+  const isPlayer = !!player;
   if (!isHost && !isPlayer) return sendJSON(res, 403, { error: 'not in this game' });
 
   // Off-tab telemetry (TI-style): the player's poll reports cumulative time
@@ -84,7 +85,7 @@ module.exports = async (req, res) => {
   if (isHost) {
     const log = (await store.getJSON(logKey(code))) || [];
     out.host = {
-      joinUrl: `/?join=${code}`,
+      joinUrl: `./?join=${code}`, // relative: resolve against the app's root page
       log: log.slice(-60),
       teams: meta.teams.map((t) => {
         const s = teamStates[t.id];

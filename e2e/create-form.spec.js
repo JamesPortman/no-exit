@@ -7,9 +7,9 @@
 // machine that has ADVENTURE_KEY and sees the real ten.
 const { test, expect } = require('@playwright/test');
 
-// Creation is gated only when the server has ADMIN_TOKEN set; pass through
-// whatever this environment uses so the spec works either way.
-const HOST_KEY = process.env.ADMIN_TOKEN || '';
+// playwright.config.js guarantees the dev server an ADMIN_TOKEN; the specs
+// see the same value.
+const HOST_KEY = process.env.ADMIN_TOKEN;
 
 async function openHostForm(page) {
   await page.goto('/');

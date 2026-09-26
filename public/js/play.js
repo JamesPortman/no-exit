@@ -5,7 +5,7 @@
 const $ = (id) => document.getElementById(id);
 const code = new URLSearchParams(location.search).get('code')?.toUpperCase();
 const session = code && loadSession(code);
-if (!session?.playerId) location.replace(code ? `/?join=${code}` : '/');
+if (!session?.playerId) location.replace(url(code ? `/?join=${code}` : '/'));
 
 const timer = makeTimer($('timer'));
 let lastPuzzleId = null;
@@ -295,7 +295,7 @@ async function poll() {
     // Transient network errors just skip a beat; auth errors bounce to join.
     if (/not in this game|game not found/.test(e.message)) {
       localStorage.removeItem(`escape:${code}`);
-      location.replace('/');
+      location.replace(url('/'));
     } else {
       $('fatal').textContent = t('play.hiccup', e.message);
     }

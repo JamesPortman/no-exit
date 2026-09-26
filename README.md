@@ -79,7 +79,9 @@ Push to `main` → GitHub Actions runs unit + E2E suites, then
 `vercel.json`, so a red suite blocks the deploy.
 
 Env vars (Vercel): `KV_REST_API_URL`/`KV_REST_API_TOKEN` (Upstash),
-`DATABASE_URL` (Neon), `ADMIN_TOKEN` (gates game creation),
+`DATABASE_URL` (Neon), `ADMIN_TOKEN` (gates game creation, history and
+leaderboard removals — required: without it a deployment refuses to create
+games, and history is closed everywhere),
 `ADVENTURE_KEY` (opens the sealed adventures).
 
 GitHub Actions secrets: `VERCEL_TOKEN`, `ADVENTURE_KEY`. Repository

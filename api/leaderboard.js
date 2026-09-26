@@ -6,11 +6,12 @@
 const { sendJSON } = require('./_lib/games.js');
 const { topSoloScores, deleteSoloScore } = require('./_lib/db.js');
 const { rateLimit } = require('./_lib/ratelimit.js');
+const { isAdmin } = require('./_lib/auth.js');
 
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const { adminToken, id } = req.body || {};
-    if (!process.env.ADMIN_TOKEN || adminToken !== process.env.ADMIN_TOKEN) {
+    if (!isAdmin(adminToken)) {
       return sendJSON(res, 403, { error: 'not authorized' });
     }
     if (!id) return sendJSON(res, 400, { error: 'id required' });

@@ -1,18 +1,21 @@
 // Host creates a game: picks an adventure and names 2-3 teams.
-// Gated by ADMIN_TOKEN when set so strangers can't create games.
+// Gated by ADMIN_TOKEN so strangers can't create games. With no token set,
+// creation is open only off Vercel (local dev, tests); a deployment without
+// ADMIN_TOKEN refuses.
 const crypto = require('crypto');
 const { getAdventure } = require('./_lib/content.js');
 const {
   MAX_TEAMS, newCode, loadGame, saveGame, saveTeam, newTeamState, sendJSON,
 } = require('./_lib/games.js');
 const { rateLimit } = require('./_lib/ratelimit.js');
+const { isAdmin } = require('./_lib/auth.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
   if (!(await rateLimit(req, res, 'create', 10, 3600))) return;
 
   const { adventureSlug, teams, adminToken } = req.body || {};
-  if (process.env.ADMIN_TOKEN && adminToken !== process.env.ADMIN_TOKEN) {
+  if (!isAdmin(adminToken, { allowUnset: true })) {
     return sendJSON(res, 403, { error: 'not authorized to create games' });
   }
 
@@ -71,7 +74,7 @@ module.exports = async (req, res) => {
     code,
     hostToken: meta.hostToken,
     teams: meta.teams,
-    joinUrl: `/?join=${code}`,
+    joinUrl: `./?join=${code}`, // relative: resolve against the app's root page
     durationMin: mins,     // echoed back post-clamp so callers see what stuck
     puzzleCount: count,
   });

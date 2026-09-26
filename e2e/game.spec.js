@@ -9,7 +9,7 @@ test('host and two teams play a full game', async ({ browser, request }) => {
   // Create the game via API (the fixture adventure is hidden from the create
   // form on purpose), then drive everything else through the UI.
   const created = await (await request.post('/api/create', {
-    data: { adventureSlug: 'test-adventure', teams: ['Red', 'Blue'] },
+    data: { adventureSlug: 'test-adventure', teams: ['Red', 'Blue'], adminToken: process.env.ADMIN_TOKEN },
   })).json();
   const { code, hostToken } = created;
 
@@ -92,7 +92,7 @@ test('host and two teams play a full game', async ({ browser, request }) => {
 
 test('a stranger cannot read game state', async ({ request }) => {
   const created = await (await request.post('/api/create', {
-    data: { adventureSlug: 'test-adventure', teams: ['Solo'] },
+    data: { adventureSlug: 'test-adventure', teams: ['Solo'], adminToken: process.env.ADMIN_TOKEN },
   })).json();
   const res = await request.get(`/api/state?code=${created.code}&hostToken=wrong`);
   expect(res.status()).toBe(403);

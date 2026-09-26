@@ -1,15 +1,17 @@
 // Past game results for the host, straight from Neon. POST with the same
 // ADMIN_TOKEN that gates game creation (body, not query, so the token never
-// lands in access logs).
+// lands in access logs). Refuses outright when ADMIN_TOKEN is unset: the
+// history holds every past player's name.
 const { sendJSON } = require('./_lib/games.js');
 const { rateLimit } = require('./_lib/ratelimit.js');
+const { isAdmin } = require('./_lib/auth.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
   if (!(await rateLimit(req, res, 'history', 30, 600))) return;
 
   const { adminToken } = req.body || {};
-  if (process.env.ADMIN_TOKEN && adminToken !== process.env.ADMIN_TOKEN) {
+  if (!isAdmin(adminToken)) {
     return sendJSON(res, 403, { error: 'not authorized' });
   }
 

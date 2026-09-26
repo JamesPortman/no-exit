@@ -160,6 +160,9 @@ describe('history endpoint', () => {
       const ok = await call(historyHandler, { body: { adminToken: 'secret-key' } });
       expect(ok.statusCode).toBe(200);
       expect(ok.body.games).toEqual([]); // no DATABASE_URL in tests
+      // Unset means nobody gets in: history lists every past player's name.
+      delete process.env.ADMIN_TOKEN;
+      expect((await call(historyHandler, { body: {} })).statusCode).toBe(403);
     } finally {
       if (prev === undefined) delete process.env.ADMIN_TOKEN;
       else process.env.ADMIN_TOKEN = prev;
