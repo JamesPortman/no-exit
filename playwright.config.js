@@ -2,6 +2,11 @@
 // Redis needed), mirroring Terra Incognita's setup.
 const { defineConfig, devices } = require('@playwright/test');
 
+// The history page refuses everyone when ADMIN_TOKEN is unset, so the suite
+// always runs with a key: the environment's own, or a throwaway one. Set here,
+// it reaches both the dev server and the specs (process.env.ADMIN_TOKEN).
+process.env.ADMIN_TOKEN ||= 'e2e-host-key';
+
 module.exports = defineConfig({
   testDir: './e2e',
   fullyParallel: false, // one worker: specs share the dev server's file store

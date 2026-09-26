@@ -6,7 +6,7 @@ const { test, expect } = require('@playwright/test');
 
 test('switching language re-renders the puzzle, and answers still work', async ({ browser, request }) => {
   const created = await (await request.post('/api/create', {
-    data: { adventureSlug: 'test-adventure', teams: ['Red'] },
+    data: { adventureSlug: 'test-adventure', teams: ['Red'], adminToken: process.env.ADMIN_TOKEN },
   })).json();
   const { code, hostToken } = created;
   await request.post('/api/host', { data: { code, hostToken, action: 'start' } });

@@ -5,6 +5,7 @@ const {
   appendLog, sendJSON,
 } = require('./_lib/games.js');
 const { recordResultsOnce } = require('./_lib/db.js');
+const { safeEqual, ownEntry } = require('./_lib/auth.js');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return sendJSON(res, 405, { error: 'POST only' });
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
   const code = String(body.code || '').toUpperCase();
   const meta = await loadGame(code);
   if (!meta) return sendJSON(res, 404, { error: 'game not found' });
-  if (!body.hostToken || body.hostToken !== meta.hostToken) {
+  if (!safeEqual(body.hostToken, meta.hostToken)) {
     return sendJSON(res, 403, { error: 'not the host' });
   }
 
@@ -52,7 +53,7 @@ module.exports = async (req, res) => {
     const { playersKey } = require('./_lib/games.js');
     const playerId = String(body.playerId || '');
     const players = await getStore().hgetallJSON(playersKey(code));
-    const player = players[playerId];
+    const player = ownEntry(players, playerId);
     if (!player) return sendJSON(res, 400, { error: 'no such player' });
     await getStore().hdelJSON(playersKey(code), playerId);
     await appendLog(code, { type: 'kick', teamId: player.teamId, name: player.name });
