@@ -1,0 +1,12 @@
+The code in this repository is released under the MIT License (see LICENSE).
+
+Not covered by that license, and © James Portman, all rights reserved:
+
+  - the ten adventures in content/sealed/ — their stories, puzzles, answers,
+    hints, solve messages and translations, whether sealed or decrypted
+  - the selection and wording of the Solo riddle bank in content/solo/
+  - the puzzle artwork in public/puzzles/
+  - the background scenes in public/backgrounds/
+
+The plaintext fixtures in content/adventures/ are part of the code and are
+covered by the MIT License.
