@@ -72,4 +72,4 @@ const server = http.createServer(async (req, res) => {
   res.end('not found');
 });
 
-server.listen(PORT, () => console.log(`escape-room dev server on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`no-exit dev server on http://localhost:${PORT}`));

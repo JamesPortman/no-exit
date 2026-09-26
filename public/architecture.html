@@ -304,7 +304,11 @@
         production, an Actions secret in CI, never in the repository. Two
         plaintext fixtures stay behind so the format is documented by example
         and a clone with no key still runs the whole engine suite. GCM's auth
-        tag means a tampered file fails loudly rather than loading junk.</p>
+        tag means a tampered file fails loudly rather than loading junk.
+        The sealing covers the adventure data — puzzle text, answer keys,
+        hints, solve messages. Images a puzzle shows, in
+        <code>public/puzzles/</code>, are plain SVGs served as-is, and some
+        necessarily depict clues or answers in readable form.</p>
       </div>
       <div class="card">
         <div class="title">Enforced by tests, not discipline</div>
@@ -601,7 +605,8 @@
 ├── __tests__/                  # 258 Vitest specs (real handlers, file store)
 ├── e2e/                        # Playwright: full game · create form · i18n · solo
 ├── dev-server.js               # local static + api host on :3400
-└── .github/workflows/ci.yml    # test gate → prebuilt production deploy</pre>
+├── .github/workflows/ci.yml    # test gate → prebuilt production deploy
+└── LICENSE · NOTICE            # code MIT; adventures, riddles, artwork © all rights reserved</pre>
   </section>
 </main>
 <script>

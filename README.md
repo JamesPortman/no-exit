@@ -1,4 +1,4 @@
-# Escape Room
+# No Exit
 
 A self-hosted virtual escape room for remote team events: 6–16 players on a
 video call split into 2–3 competing teams (Zoom breakout rooms), racing
@@ -38,15 +38,19 @@ lexicon, so a run is the same room — same mechanic, same numbers, same answer
   keyless clone still plays. Plaintext working copy lives in the gitignored
   `content/solo-source/`.
 - `content/sealed/*.enc` — the ten real adventures, AES-256-GCM encrypted.
-  This repository is public, so puzzle answers, hints and solve messages are
-  committed only as ciphertext. Playing needs `ADVENTURE_KEY`; without it the
-  app runs with the fixtures alone.
+  This repository is public, so the adventure data — puzzle text, answer keys,
+  hints and solve messages — is committed only as ciphertext. Playing needs
+  `ADVENTURE_KEY`; without it the app runs with the fixtures alone.
+- `public/puzzles/<slug>/` — images some puzzles show. These are plain SVGs,
+  served as-is, and some necessarily depict clues or answers in readable form;
+  the sealing covers the adventure data, not this artwork.
 - `content/source/` — gitignored plaintext working copies. `npm run seal`
   encrypts them into `content/sealed/`; `npm run unseal` recovers them from
   ciphertext given the key.
 - `public/index.html` / `play.html` / `host.html` — join page, player screen, host
   console (static, no build step); `solo.html`, `history.html` and
-  `architecture.html` (served at `/architecture`) alongside
+  `architecture.html` (served at `/architecture`) alongside; `backgrounds/`
+  holds one SVG scene per adventure
 
 ## Serving under a path prefix
 
@@ -69,13 +73,13 @@ npm install
 npm test          # Vitest: engine, timing, host controls, no-spoiler-leak
 npm run dev       # local server on :3400 (file store, no Redis needed)
 npm run seal      # re-encrypt content/source/ after authoring (needs the key)
-npm run test:e2e  # Playwright (needs the dev server)
+npm run test:e2e  # Playwright (starts the dev server itself)
 ```
 
 ## Deploy
 
-Push to `main` → GitHub Actions runs unit + E2E suites, then
-`vercel deploy --prebuilt --prod`. Vercel's git auto-deploy is disabled in
+Every push runs the unit + E2E suites in GitHub Actions; on `main`, a green
+run then goes out with `vercel deploy --prebuilt --prod`. Vercel's git auto-deploy is disabled in
 `vercel.json`, so a red suite blocks the deploy.
 
 Env vars (Vercel): `KV_REST_API_URL`/`KV_REST_API_TOKEN` (Upstash),
@@ -86,3 +90,10 @@ games, and history is closed everywhere),
 
 GitHub Actions secrets: `VERCEL_TOKEN`, `ADVENTURE_KEY`. Repository
 variables: `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+
+## License
+
+The code is MIT — see [`LICENSE`](LICENSE). The adventures (stories, puzzles,
+answers, hints and their translations), the Solo riddle bank, the puzzle
+artwork and the background scenes are © James Portman, all rights reserved —
+see [`NOTICE`](NOTICE).
