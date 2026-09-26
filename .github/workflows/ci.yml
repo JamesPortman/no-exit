@@ -1,11 +1,13 @@
 name: CI
 
-# Every push runs both test suites; main deploys to production only after they
-# pass. Vercel's git auto-deploy is disabled (vercel.json), so a red suite
+# Pull requests and pushes to main run both test suites; main deploys to
+# production only after they pass. Vercel's git auto-deploy is disabled (vercel.json), so a red suite
 # blocks the deploy. Adapted from Terra Incognita's pipeline; E2E here runs
 # against the local dev server (file store), so the test job needs no secrets.
 on:
   push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
