@@ -27,26 +27,42 @@ function newKeyHex() {
   return crypto.randomBytes(KEY_BYTES).toString('hex');
 }
 
-// Envelope: v1.<iv hex>.<auth tag hex>.<ciphertext base64>
+// Envelope: v2.<iv hex>.<auth tag hex>.<ciphertext base64>
 //
-// The nonce is derived from the plaintext under the key (a synthetic IV)
-// rather than drawn at random, so re-sealing unchanged content reproduces
-// byte-identical output. That keeps `git diff` after `npm run seal` showing
-// only the adventure actually edited instead of all ten. Distinct content
-// still gets a distinct nonce, which is the property GCM needs.
-function ivFor(plaintext, key) {
-  return crypto.createHmac('sha256', key)
+// The nonce is derived from the plaintext (a synthetic IV) rather than drawn
+// at random, so re-sealing unchanged content reproduces byte-identical output.
+// That keeps `git diff` after `npm run seal` showing only the adventure
+// actually edited instead of all ten. Distinct content still gets a distinct
+// nonce, which is the property GCM needs.
+//
+// v2 derives two independent subkeys from ADVENTURE_KEY with HKDF-SHA256 —
+// one for the synthetic IV (HMAC), one for AES-GCM — so no key is used by two
+// primitives. v1 used ADVENTURE_KEY directly for both; it still decrypts, so
+// existing .enc files keep working until the next `npm run seal` rewrites
+// them as v2.
+const SUBKEY_SALT = Buffer.from('no-exit/seal', 'utf8');
+
+function subkeys(key) {
+  const derive = (info) => Buffer.from(
+    crypto.hkdfSync('sha256', key, SUBKEY_SALT, Buffer.from(info, 'utf8'), KEY_BYTES),
+  );
+  return { enc: derive('v2/aes-256-gcm'), iv: derive('v2/synthetic-iv') };
+}
+
+function ivFor(plaintext, macKey) {
+  return crypto.createHmac('sha256', macKey)
     .update(String(plaintext), 'utf8')
     .digest()
     .subarray(0, IV_BYTES);
 }
 
 function encrypt(plaintext, key) {
-  const iv = ivFor(plaintext, key);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const k = subkeys(key);
+  const iv = ivFor(plaintext, k.iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', k.enc, iv);
   const body = Buffer.concat([cipher.update(String(plaintext), 'utf8'), cipher.final()]);
   return [
-    'v1',
+    'v2',
     iv.toString('hex'),
     cipher.getAuthTag().toString('hex'),
     body.toString('base64'),
@@ -55,11 +71,12 @@ function encrypt(plaintext, key) {
 
 function decrypt(envelope, key) {
   const [version, ivHex, tagHex, bodyB64] = String(envelope).trim().split('.');
-  if (version !== 'v1' || !ivHex || !tagHex || !bodyB64) {
+  if ((version !== 'v1' && version !== 'v2') || !ivHex || !tagHex || !bodyB64) {
     throw new Error('sealed content is malformed');
   }
+  const aesKey = version === 'v2' ? subkeys(key).enc : key; // v1: legacy, key used directly
   const decipher = crypto.createDecipheriv(
-    'aes-256-gcm', key, Buffer.from(ivHex, 'hex'),
+    'aes-256-gcm', aesKey, Buffer.from(ivHex, 'hex'),
   );
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   return Buffer.concat([

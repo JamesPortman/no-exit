@@ -25,7 +25,7 @@ lexicon, so a run is the same room — same mechanic, same numbers, same answer
   `state`, `answer`, `hint`, `host`, `leaderboard`, `history`
 - `api/_lib/` — `store.js` (KV), `games.js` (engine), `content.js`
   (adventure loader + anti-spoiler sanitizer), `ratelimit.js`, `seal.js`
-  (AES-256-GCM), `riddles.js` (sealed riddle bank), `db.js` (Neon)
+  (AES-256-GCM under HKDF-derived subkeys), `riddles.js` (sealed riddle bank), `db.js` (Neon)
 - `content/adventures/` — plaintext fixtures only (`test-adventure`,
   `test-long`). They document the format and keep the engine testable in a
   clone with no key. `test-adventure` is translated, so the E2E suite can
