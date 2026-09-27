@@ -305,6 +305,9 @@
         plaintext fixtures stay behind so the format is documented by example
         and a clone with no key still runs the whole engine suite. GCM's auth
         tag means a tampered file fails loudly rather than loading junk.
+        <code>ADVENTURE_KEY</code> is never used directly: HKDF-SHA256 derives
+        separate subkeys for the cipher and for the synthetic nonce, which is
+        taken from the content so re-sealing unchanged files is byte-identical.
         The sealing covers the adventure data — puzzle text, answer keys,
         hints, solve messages. Images a puzzle shows, in
         <code>public/puzzles/</code>, are plain SVGs served as-is, and some
@@ -493,6 +496,13 @@
       skipped history writes and the plaintext fixtures keep every feature
       testable offline (history needs <code>ADMIN_TOKEN</code> to be read).
       A deployment needs <code>ADMIN_TOKEN</code> to create games at all.
+    </p>
+    <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
+      Supply chain: the workflow runs with a read-only <code>GITHUB_TOKEN</code>,
+      and every action is pinned to a commit SHA rather than a movable tag, so a
+      compromised or retagged action can't change what runs here. Dependabot
+      checks the pins monthly and opens one grouped PR, which goes through the
+      same gate as any other change.
     </p>
   </section>
 
