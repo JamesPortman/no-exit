@@ -67,7 +67,7 @@ describe('sealed content', () => {
     if (!fs.existsSync(dir)) return;
     for (const f of fs.readdirSync(dir)) {
       const raw = fs.readFileSync(path.join(dir, f), 'utf8');
-      expect(raw.startsWith('v1.'), `${f} is not a sealed envelope`).toBe(true);
+      expect(/^v[12]\./.test(raw), `${f} is not a sealed envelope`).toBe(true);
       expect(/answers|solveMessage|hints/.test(raw), `${f} leaks structure`).toBe(false);
     }
   });
