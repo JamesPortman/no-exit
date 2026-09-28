@@ -137,7 +137,7 @@
     <div class="chip"><dt>Game state</dt><dd>Upstash Redis, 6h TTL</dd></div>
     <div class="chip"><dt>History</dt><dd>Neon Postgres, 1 write/game</dd></div>
     <div class="chip"><dt>Auth</dt><dd>Bearer-style tokens, no accounts</dd></div>
-    <div class="chip"><dt>Tests</dt><dd>258 unit + 9 Playwright, gate CI</dd></div>
+    <div class="chip"><dt>Tests</dt><dd>274 unit + 9 Playwright, gate CI</dd></div>
   </dl>
 
   <section>
@@ -469,8 +469,9 @@
       <div class="card">
         <div class="title">Every push</div>
         <ol>
-          <li>258 Vitest unit tests — engine, timing, sanitizer leak checks,
-            content schema + meta chains, i18n parity, host tools — run
+          <li>274 Vitest unit tests — engine, timing, sanitizer leak checks,
+            content schema + meta chains, i18n parity, host tools, admin
+            auth and content sealing — run
             against the file store (no cloud needed).</li>
           <li>Playwright drives a real multi-team game through the actual UI:
             host + two player browsers, wrong answer, hint, pause,
@@ -612,7 +613,7 @@
 ├── content/solo/riddles.enc    # sealed riddle bank for generated runs
 ├── content/source/             # gitignored plaintext working copies
 ├── scripts/{seal,unseal}.js    # encrypt for commit / recover from ciphertext
-├── __tests__/                  # 258 Vitest specs (real handlers, file store)
+├── __tests__/                  # 274 Vitest specs (real handlers, file store)
 ├── e2e/                        # Playwright: full game · create form · i18n · solo
 ├── dev-server.js               # local static + api host on :3400
 ├── .github/workflows/ci.yml    # test gate → prebuilt production deploy
