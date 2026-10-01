@@ -1,4 +1,4 @@
-// Host creates a game: picks an adventure and names 2-3 teams.
+// Host creates a game: picks an adventure and names 2-5 teams.
 // Gated by ADMIN_TOKEN so strangers can't create games. With no token set,
 // creation is open only off Vercel (local dev, tests); a deployment without
 // ADMIN_TOKEN refuses.

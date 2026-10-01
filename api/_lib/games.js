@@ -6,7 +6,7 @@ const { getAdventure } = require('./content.js');
 const { playerFor } = require('./auth.js');
 
 const MAX_PLAYERS = 16;
-const MAX_TEAMS = 3;
+const MAX_TEAMS = 5;
 const TTL_SEC = 6 * 3600;
 const LOG_CAP = 200;
 const CHAT_CAP = 200;

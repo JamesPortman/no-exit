@@ -175,7 +175,7 @@ $('host-toggle').addEventListener('click', async () => {
 });
 
 $('create-btn').addEventListener('click', async () => {
-  const teams = [$('team-1').value, $('team-2').value, $('team-3').value]
+  const teams = [1, 2, 3, 4, 5].map((i) => $(`team-${i}`).value)
     .map((t) => t.trim()).filter(Boolean);
   $('create-btn').disabled = true;
   $('create-error').textContent = '';

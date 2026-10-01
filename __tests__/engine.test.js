@@ -9,8 +9,18 @@ describe('game lifecycle', () => {
     expect((await call(create, { body: { adventureSlug: 'nope', teams: ['A'] } })).statusCode).toBe(400);
     expect((await call(create, { body: { adventureSlug: 'test-adventure', teams: [] } })).statusCode).toBe(400);
     expect((await call(create, {
-      body: { adventureSlug: 'test-adventure', teams: ['A', 'B', 'C', 'D'] },
+      body: { adventureSlug: 'test-adventure', teams: ['A', 'B', 'C', 'D', 'E', 'F'] },
     })).statusCode).toBe(400);
+  });
+
+  it('accepts up to five teams, each joinable', async () => {
+    const made = await call(create, {
+      body: { adventureSlug: 'test-adventure', teams: ['A', 'B', 'C', 'D', 'E'] },
+    });
+    expect(made.statusCode).toBe(200);
+    expect(made.body.teams.map((t) => t.id)).toEqual(['t1', 't2', 't3', 't4', 't5']);
+    const joined = await call(join, { body: { code: made.body.code, name: 'Eve', teamId: 't5' } });
+    expect(joined.statusCode).toBe(200);
   });
 
   it('plays a full two-team game through to the ranking', async () => {
