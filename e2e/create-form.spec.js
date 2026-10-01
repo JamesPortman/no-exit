@@ -70,7 +70,9 @@ test('a game created through the form runs at the chosen length', async ({ page,
   await page.locator('#preset-row button').nth(2).click(); // 10 puzzles · 30 min
   await page.fill('#team-1', 'Form Team');
   await page.fill('#team-2', 'Second Team');
-  await page.fill('#team-3', '');
+  // Five teams come pre-named; clearing a box drops that team.
+  await expect(page.locator('#team-5')).toHaveValue('Code Breakers');
+  for (const i of [3, 4, 5]) await page.fill(`#team-${i}`, '');
   await page.fill('#admin-token', HOST_KEY);
   await page.click('#create-btn');
 
@@ -79,6 +81,7 @@ test('a game created through the form runs at the chosen length', async ({ page,
   const code = new URL(page.url()).searchParams.get('code');
   await expect(page.locator('#code-display')).toHaveText(code);
   await expect(page.locator('#teams')).toContainText('Form Team');
+  await expect(page.locator('#teams .host-team')).toHaveCount(2);
 
   // A player joins and the game is exactly as long as the preset asked.
   const ctx = await browser.newContext();
@@ -107,6 +110,9 @@ test('language and theme choices apply and survive a reload', async ({ page }) =
   await page.selectOption('#lang-select', 'es');
   await expect(page.locator('#join-card h2')).toHaveText('Unirse a una partida');
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+  // Default team names follow the language, all five of them.
+  await expect(page.locator('#team-4')).toHaveValue('Búhos Nocturnos');
+  await expect(page.locator('#team-5')).toHaveValue('Rompecódigos');
 
   const theme = await page.locator('html').getAttribute('data-theme');
   await page.click('#theme-btn');

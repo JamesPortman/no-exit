@@ -20,15 +20,13 @@ document.addEventListener('langchange', () => {
 const teamDefaults = () => {
   const all = [];
   for (const lang of Object.keys(LANGS)) {
-    for (const k of ['team.default1', 'team.default2', 'team.default3']) {
-      all.push(MESSAGES[lang][k]);
-    }
+    for (let i = 1; i <= 5; i++) all.push(MESSAGES[lang][`team.default${i}`]);
   }
   return all;
 };
 function applyTeamDefaults() {
   const defaults = teamDefaults();
-  [1, 2, 3].forEach((i) => {
+  [1, 2, 3, 4, 5].forEach((i) => {
     const input = $(`team-${i}`);
     if (!input.value.trim() || defaults.includes(input.value.trim())) {
       input.value = t(`team.default${i}`);
