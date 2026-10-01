@@ -49,13 +49,15 @@ function renderControls(state) {
   $('end-btn').classList.toggle('hidden', state === 'finished');
 }
 
+const openChats = new Set();
+
 function renderTeams(s) {
   $('teams').innerHTML = s.host.teams.map((t) => {
     const done = t.finishedAtMs != null;
     const hintCount = Object.values(t.hintsTaken).reduce((a, b) => a + b, 0);
     const rosterHtml = t.players.length
       ? t.players.map((p) =>
-          `<span style="white-space:nowrap">${esc(p.name)}${p.awayMs > 0 ? ` <span title="time off the game tab">👀 ${Math.round(p.awayMs / 1000)}s</span>` : ''}<button class="kick-btn" data-kick="${p.id}" data-name="${esc(p.name)}" title="remove player">✕</button></span>`
+          `<span style="white-space:nowrap">${esc(p.name)}${p.awayForMs != null ? ` <span class="away-now" title="off the game tab right now">away ${fmtMs(p.awayForMs)}</span>` : ''}${p.awayMs > 0 ? ` <span title="total time off the game tab">👀 ${Math.round(p.awayMs / 1000)}s</span>` : ''}<button class="kick-btn" data-kick="${p.id}" data-name="${esc(p.name)}" title="remove player">✕</button></span>`
         ).join(', ')
       : 'no players yet';
     return `
@@ -69,6 +71,12 @@ function renderTeams(s) {
       <div class="stat"><span>Wrong guesses</span><span>${t.wrongCount}${t.lastWrongGuesses.length ? ` <span class="muted">(${t.lastWrongGuesses.map(esc).join(' · ')})</span>` : ''}</span></div>
       <div class="stat"><span>Hints used</span><span>${hintCount}</span></div>
       <div class="stat"><span>Penalty</span><span>${t.penaltyMs ? '+' + fmtMs(t.penaltyMs) : '—'}</span></div>
+      <details class="team-chat" data-chat="${t.id}"${openChats.has(t.id) ? ' open' : ''}>
+        <summary>💬 Team chat (${t.chat.length})</summary>
+        <div class="chat-log">${t.chat.length
+          ? t.chat.map((m) => `<div class="chat-msg"><span class="t">${new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><strong>${esc(m.name)}</strong> ${esc(m.text)}</div>`).join('')
+          : '<div class="muted small">no messages yet</div>'}</div>
+      </details>
       ${!done && s.state !== 'finished' ? `
         <button class="secondary small-btn" data-act="freehint" data-team="${t.id}">🎁 Free hint</button>
         <button class="secondary small-btn" data-act="advance" data-team="${t.id}">⏭ Force-advance</button>` : ''}
@@ -80,6 +88,16 @@ function renderTeams(s) {
       if (act === 'advance' && !confirm('Skip this team past their current puzzle?')) return;
       hostAction(act, { teamId: team });
     };
+  }
+  // The cards are rebuilt every poll, so remember which chats the host has
+  // open and keep each one scrolled to its newest message.
+  for (const d of $('teams').querySelectorAll('details[data-chat]')) {
+    const log = d.querySelector('.chat-log');
+    log.scrollTop = log.scrollHeight;
+    d.addEventListener('toggle', () => {
+      if (d.open) openChats.add(d.dataset.chat); else openChats.delete(d.dataset.chat);
+      log.scrollTop = log.scrollHeight;
+    });
   }
   for (const btn of $('teams').querySelectorAll('button[data-kick]')) {
     btn.onclick = () => {
@@ -120,6 +138,7 @@ function renderLog(log) {
       case 'hint': return `<span class="t">${t}</span>💡 ${esc(team)} took hint ${e.hintIdx + 1} (+${e.penaltySec}s)`;
       case 'freehint': return `<span class="t">${t}</span>🎁 free hint to ${esc(team)}`;
       case 'advance': return `<span class="t">${t}</span>⏭ ${esc(team)} force-advanced past “${esc(e.puzzleTitle)}”`;
+      case 'back': return `<span class="t">${t}</span>👀 ${esc(e.name)} (${esc(team)}) was off the game tab for ${fmtMs(e.goneMs)}`;
       case 'host': return `<span class="t">${t}</span>🎛 host: ${esc(e.action)}${e.msg ? ` — “${esc(e.msg)}”` : ''}`;
       default: return `<span class="t">${t}</span>${esc(e.type)}`;
     }
@@ -137,6 +156,11 @@ function render(s) {
   $('join-link').innerHTML = `<a href="${link}" style="color:var(--accent)">${link}</a>`;
   renderControls(s.state);
   renderTeams(s);
+  const away = s.host.teams.flatMap((t) => t.players
+    .filter((p) => p.awayForMs != null)
+    .map((p) => `${esc(p.name)} (${esc(t.name)}) ${fmtMs(p.awayForMs)}`));
+  $('away-banner').classList.toggle('hidden', !away.length);
+  $('away-banner').innerHTML = away.length ? `👀 Off the game tab now: ${away.join(' · ')}` : '';
   // Standings only once the race is actually on.
   if (s.ranking && s.state !== 'lobby') {
     $('ranking-card').classList.remove('hidden');

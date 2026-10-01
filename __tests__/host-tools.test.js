@@ -150,6 +150,57 @@ describe('off-tab telemetry', () => {
   });
 });
 
+describe('live off-tab status', () => {
+  const alice = (h) => h.body.host.teams.flatMap((t) => t.players).find((p) => p.name === 'Alice');
+
+  it('shows the host who is away right now, and logs the absence on return', async () => {
+    const { code, hostToken, p1 } = await startedGame();
+    const poll = (away) => get(state, { code, playerId: p1.playerId, token: p1.token, away });
+
+    await poll('0');
+    expect(alice(await hostState(code, hostToken)).awayForMs).toBeNull();
+
+    await poll('1');
+    let h = await hostState(code, hostToken);
+    expect(alice(h).awayForMs).toBeGreaterThanOrEqual(0);
+
+    // Back-dating the departure stands in for waiting; a second away=1 must
+    // not restart the clock.
+    const { getStore } = require('../api/_lib/store.js');
+    const { playersKey } = require('../api/_lib/games.js');
+    const rec = (await getStore().hgetallJSON(playersKey(code)))[p1.playerId];
+    rec.awaySince = Date.now() - 42_000;
+    await getStore().hsetJSON(playersKey(code), p1.playerId, rec);
+    await poll('1');
+    h = await hostState(code, hostToken);
+    expect(alice(h).awayForMs).toBeGreaterThanOrEqual(42_000);
+
+    await poll('0');
+    h = await hostState(code, hostToken);
+    expect(alice(h).awayForMs).toBeNull();
+    const back = h.body.host.log.find((e) => e.type === 'back');
+    expect(back.name).toBe('Alice');
+    expect(back.goneMs).toBeGreaterThanOrEqual(42_000);
+  });
+
+  it('does not log a blink (a page refresh) as an absence', async () => {
+    const { code, hostToken, p1 } = await startedGame();
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '0' });
+    const h = await hostState(code, hostToken);
+    expect(h.body.host.log.some((e) => e.type === 'back')).toBe(false);
+  });
+
+  it('ignores junk away values and never shows a live status after the game ends', async () => {
+    const { code, hostToken, p1 } = await startedGame();
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: 'yes' });
+    expect(alice(await hostState(code, hostToken)).awayForMs).toBeNull();
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await call(host, { body: { code, hostToken, action: 'end' } });
+    expect(alice(await hostState(code, hostToken)).awayForMs).toBeNull();
+  });
+});
+
 describe('history endpoint', () => {
   it('honors ADMIN_TOKEN and degrades gracefully without a database', async () => {
     const prev = process.env.ADMIN_TOKEN;

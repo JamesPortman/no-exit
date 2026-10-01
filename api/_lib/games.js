@@ -9,12 +9,15 @@ const MAX_PLAYERS = 16;
 const MAX_TEAMS = 3;
 const TTL_SEC = 6 * 3600;
 const LOG_CAP = 200;
+const CHAT_CAP = 200;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 const metaKey = (code) => `game:${code}`;
 const playersKey = (code) => `game:${code}:players`;
 const teamKey = (code, teamId) => `game:${code}:team:${teamId}`;
 const logKey = (code) => `game:${code}:log`;
+const chatKey = (code, teamId) => `game:${code}:chat:${teamId}`;
+const chatSeqKey = (code, teamId) => `game:${code}:chatseq:${teamId}`;
 
 function newCode() {
   let c = '';
@@ -175,8 +178,8 @@ async function requirePlayer(req, res) {
 }
 
 module.exports = {
-  MAX_PLAYERS, MAX_TEAMS, TTL_SEC,
-  metaKey, playersKey, teamKey, logKey,
+  MAX_PLAYERS, MAX_TEAMS, TTL_SEC, CHAT_CAP,
+  metaKey, playersKey, teamKey, logKey, chatKey, chatSeqKey,
   newCode, loadGame, saveGame, newTeamState, loadTeam, saveTeam,
   elapsedMs, maybeExpire, appendLog,
   normalizeAnswer, checkAnswer, rankTeams, adventureFor,
