@@ -51,10 +51,12 @@ async function lookup() {
     const existing = loadSession(code);
     if (existing?.playerId) return location.assign(url(`/play.html?code=${code}`));
     $('join-title').textContent = t('join.pickTeam', advText(lookedUp, 'title'));
-    $('join-teams').innerHTML = lookedUp.teams.map((t, i) => `
-      <label style="display:flex;align-items:center;gap:8px;margin:6px 0">
-        <input type="radio" name="team" value="${t.id}" ${i === 0 ? 'checked' : ''}>
-        ${esc(t.name)}
+    // Full teams stay listed but can't be picked; the first open one is preselected.
+    const firstOpen = lookedUp.teams.find((t) => !t.full)?.id;
+    $('join-teams').innerHTML = lookedUp.teams.map((team) => `
+      <label style="display:flex;align-items:center;gap:8px;margin:6px 0${team.full ? ';opacity:0.5' : ''}">
+        <input type="radio" name="team" value="${team.id}" ${team.id === firstOpen ? 'checked' : ''} ${team.full ? 'disabled' : ''}>
+        ${esc(team.name)}${team.full ? ` <span class="muted small">${t('join.teamFull')}</span>` : ''}
       </label>`).join('');
     $('join-lookup').classList.remove('hidden');
   } catch (e) {

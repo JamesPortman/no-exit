@@ -119,7 +119,7 @@
     <div class="kicker">Executive summary</div>
     <p>
       No Exit is a hosted virtual escape room for remote team events: up to
-      16 players on a video call split into 2–5 competing teams, racing the
+      up to 25 players (5 per team) on a video call split into 2–5 competing teams, racing the
       same 30-minute, ten-puzzle adventure while a host watches progress and
       dispenses hints. The client is three static HTML pages (join, play,
       host console), plus solo and history, with vanilla JS — no framework, no build step. A thin set
@@ -264,7 +264,7 @@
     <table class="plain keys">
       <tr><th>Redis key</th><th>Contents</th></tr>
       <tr><td>game:CODE</td><td>Meta: state, <code>startAt</code>/<code>pausedAt</code>/<code>pauseAccumMs</code>/<code>endedAt</code>, duration, teams, <code>hostToken</code>, broadcast, <code>resultsWritten</code> flag. Solo runs add <code>mode:'solo'</code>, <code>soloSeed</code> and the whole generated <code>soloAdventure</code> (~10&nbsp;KB). Codes are 4 chars from an alphabet without 0/1/I/L/O.</td></tr>
-      <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs, awaySince}</code>. <code>awayMs</code> is the running total off the game tab; <code>awaySince</code> is set while the tab is hidden right now, so the host console can flag who is away live. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
+      <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs, awaySince}</code>. <code>awayMs</code> is the running total off the game tab; <code>awaySince</code> is set while the tab is hidden right now, so the host console can flag who is away live. Joins use <code>hsetnx</code>; max 5 players per team and 25 per game.</td></tr>
       <tr><td>game:CODE:team:ID</td><td>Per-team progress: <code>puzzleIdx</code>, solves (with elapsed-ms stamps), <code>hintsTaken</code> per puzzle, <code>penaltyMs</code>, <code>wrongCount</code>, <code>tabPenalties</code>, <code>finishedAtMs</code>.</td></tr>
       <tr><td>game:CODE:tabcharges</td><td>Hash of absences already charged the 1-minute tab penalty, one field per <code>playerId:awaySince</code>. A player off the tab more than 5 seconds while the clock runs costs their team a minute; whichever poll notices first writes the field with <code>hsetnx</code>, so racing polls never charge the same absence twice. Solo runs are exempt.</td></tr>
       <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, returns from off-tab absences, host actions), capped at 200 entries.</td></tr>

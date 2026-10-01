@@ -13,6 +13,37 @@ describe('game lifecycle', () => {
     })).statusCode).toBe(400);
   });
 
+  it('caps a team at five players and lookup marks it full', async () => {
+    const made = await call(create, {
+      body: { adventureSlug: 'test-adventure', teams: ['A', 'B'] },
+    });
+    const { code } = made.body;
+    for (let i = 1; i <= 5; i++) {
+      const ok = await call(join, { body: { code, name: `A${i}`, teamId: 't1' } });
+      expect(ok.statusCode).toBe(200);
+    }
+    const sixth = await call(join, { body: { code, name: 'A6', teamId: 't1' } });
+    expect(sixth.statusCode).toBe(400);
+    expect(sixth.body.error).toMatch(/team is full/);
+    // The other team still has room.
+    expect((await call(join, { body: { code, name: 'B1', teamId: 't2' } })).statusCode).toBe(200);
+    const { lookup } = require('./helpers.js');
+    const l = await call(lookup, { method: 'GET', query: { code } });
+    expect(l.body.teams.map((t) => t.full)).toEqual([true, false]);
+  });
+
+  it('holds 25 players across five full teams', async () => {
+    const made = await call(create, {
+      body: { adventureSlug: 'test-adventure', teams: ['A', 'B', 'C', 'D', 'E'] },
+    });
+    const { code } = made.body;
+    for (const teamId of ['t1', 't2', 't3', 't4', 't5']) {
+      for (let i = 1; i <= 5; i++) {
+        expect((await call(join, { body: { code, name: `${teamId}-${i}`, teamId } })).statusCode).toBe(200);
+      }
+    }
+  });
+
   it('accepts up to five teams, each joinable', async () => {
     const made = await call(create, {
       body: { adventureSlug: 'test-adventure', teams: ['A', 'B', 'C', 'D', 'E'] },

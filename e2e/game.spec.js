@@ -156,3 +156,21 @@ test('teammates chat privately; the host sees who has left the tab', async ({ br
   // The rule is on screen for everyone in the game.
   await expect(carol.locator('#view-play .tab-rule')).toBeVisible();
 });
+
+test('a full team is shown but cannot be picked on the join page', async ({ page, request }) => {
+  const created = await (await request.post('/api/create', {
+    data: { adventureSlug: 'test-adventure', teams: ['Red', 'Blue'], adminToken: process.env.ADMIN_TOKEN },
+  })).json();
+  const { code } = created;
+  for (let i = 1; i <= 5; i++) {
+    await request.post('/api/join', { data: { code, name: `Red ${i}`, teamId: 't1' } });
+  }
+  await page.goto(`/?join=${code}`);
+  await expect(page.locator('input[name=team][value=t1]')).toBeDisabled();
+  await expect(page.locator('#join-teams')).toContainText('(full)');
+  // The open team is preselected, so joining just works.
+  await expect(page.locator('input[name=team][value=t2]')).toBeChecked();
+  await page.fill('#join-name', 'Blue 1');
+  await page.click('#join-btn');
+  await expect(page.locator('#view-lobby')).toBeVisible();
+});
