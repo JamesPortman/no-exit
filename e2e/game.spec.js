@@ -97,3 +97,56 @@ test('a stranger cannot read game state', async ({ request }) => {
   const res = await request.get(`/api/state?code=${created.code}&hostToken=wrong`);
   expect(res.status()).toBe(403);
 });
+
+test('teammates chat privately; the host sees who has left the tab', async ({ browser, request }) => {
+  test.setTimeout(60_000);
+  const created = await (await request.post('/api/create', {
+    data: { adventureSlug: 'test-adventure', teams: ['Red', 'Blue'], adminToken: process.env.ADMIN_TOKEN },
+  })).json();
+  const { code, hostToken } = created;
+
+  const hostPage = await (await browser.newContext()).newPage();
+  await hostPage.addInitScript(
+    ([c, t]) => localStorage.setItem(`escape:host:${c}`, t),
+    [code, hostToken],
+  );
+  await hostPage.goto(`/host.html?code=${code}`);
+
+  const join = async (name, teamId) => {
+    const page = await (await browser.newContext()).newPage();
+    await page.goto(`/?join=${code}`);
+    await page.fill('#join-name', name);
+    await page.check(`input[name=team][value=${teamId}]`);
+    await page.click('#join-btn');
+    await expect(page.locator('#view-lobby')).toBeVisible();
+    return page;
+  };
+  const alice = await join('Alice', 't1');
+  const carol = await join('Carol', 't1');
+  const bob = await join('Bob', 't2');
+
+  // Alice writes to her team: Carol sees it, Bob (other team) does not.
+  await alice.fill('#chat-input', 'start with the clock');
+  await alice.press('#chat-input', 'Enter');
+  await expect(alice.locator('#chat-log')).toContainText('start with the clock');
+  await expect(carol.locator('#chat-log')).toContainText('start with the clock', { timeout: 10_000 });
+  await expect(bob.locator('#chat-log')).not.toContainText('start with the clock');
+
+  // The host can read Red's chat from the console.
+  await hostPage.locator('details[data-chat=t1] summary').click();
+  await expect(hostPage.locator('details[data-chat=t1]')).toContainText('start with the clock', { timeout: 10_000 });
+
+  await hostPage.click('#start-btn');
+  await expect(bob.locator('#view-play')).toBeVisible({ timeout: 10_000 });
+
+  // Bob switches away: the host sees it live, then it clears when he returns.
+  const setHidden = (page, hidden) => page.evaluate((h) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+  await setHidden(bob, true);
+  await expect(hostPage.locator('#away-banner')).toContainText('Bob', { timeout: 10_000 });
+  await expect(hostPage.locator('#teams .away-now')).toHaveCount(1);
+  await setHidden(bob, false);
+  await expect(hostPage.locator('#away-banner')).toBeHidden({ timeout: 10_000 });
+});

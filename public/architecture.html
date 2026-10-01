@@ -264,9 +264,10 @@
     <table class="plain keys">
       <tr><th>Redis key</th><th>Contents</th></tr>
       <tr><td>game:CODE</td><td>Meta: state, <code>startAt</code>/<code>pausedAt</code>/<code>pauseAccumMs</code>/<code>endedAt</code>, duration, teams, <code>hostToken</code>, broadcast, <code>resultsWritten</code> flag. Solo runs add <code>mode:'solo'</code>, <code>soloSeed</code> and the whole generated <code>soloAdventure</code> (~10&nbsp;KB). Codes are 4 chars from an alphabet without 0/1/I/L/O.</td></tr>
-      <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs}</code>. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
+      <tr><td>game:CODE:players</td><td>Hash <code>playerId → {name, teamId, token, awayMs, awaySince}</code>. <code>awayMs</code> is the running total off the game tab; <code>awaySince</code> is set while the tab is hidden right now, so the host console can flag who is away live. Joins use <code>hsetnx</code>; max 16 players.</td></tr>
       <tr><td>game:CODE:team:ID</td><td>Per-team progress: <code>puzzleIdx</code>, solves (with elapsed-ms stamps), <code>hintsTaken</code> per puzzle, <code>penaltyMs</code>, <code>wrongCount</code>, <code>finishedAtMs</code>.</td></tr>
-      <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, host actions), capped at 200 entries.</td></tr>
+      <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, returns from off-tab absences, host actions), capped at 200 entries.</td></tr>
+      <tr><td>game:CODE:chat:ID</td><td>Team chat: a Redis list of <code>{seq, at, name, text}</code> (plus the sender's id, never sent to clients), capped at 200 with <code>rpush</code>+<code>ltrim</code> so racing senders never drop each other. Players read their own team's list on the state poll, asking only for messages after the last <code>seq</code> they hold; the host reads every team's. <code>game:CODE:chatseq:ID</code> is the counter behind <code>seq</code>.</td></tr>
       <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/solo/join/lookup/history/leaderboard, per-<em>team</em> (15/min) on answer attempts.</td></tr>
     </table>
     <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">

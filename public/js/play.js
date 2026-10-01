@@ -36,6 +36,8 @@ function setFeedback(text, cls, hold = false) {
 // Off-tab tracking (as in Terra Incognita): accumulate time this player
 // spends away from the tab while the game is running; the poll reports it
 // and the host console / final ranking show it when it's more than zero.
+// Every poll also says whether the tab is hidden right now, and a flip polls
+// at once, so the host console shows who is away while they are away.
 let awayMs = 0, hiddenAt = null, sentAwayMs = 0, lastGameState = null;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
@@ -44,7 +46,62 @@ document.addEventListener('visibilitychange', () => {
     if (lastGameState === 'running') awayMs += Date.now() - hiddenAt;
     hiddenAt = null;
   }
+  poll();
 });
+// Closing or navigating away never fires a visible→hidden poll that lands, so
+// leave word on the way out; keepalive lets the request outlive the page.
+window.addEventListener('pagehide', () => {
+  try {
+    fetch(url(`/api/state?code=${code}&playerId=${session.playerId}`
+      + `&token=${encodeURIComponent(session.token)}&away=1`), { keepalive: true });
+  } catch {}
+});
+
+// Team chat: messages arrive on the state poll. The client keeps what it has
+// and asks only for messages newer than the last seq it holds.
+const chatMsgs = [];
+let chatSeq = 0;
+
+function renderChat(s) {
+  $('chat-card').classList.toggle('hidden', !!s.solo);
+  if (s.solo || !s.chat) return;
+  const fresh = s.chat.filter((m) => m.seq > chatSeq);
+  if (!fresh.length && chatMsgs.length) return;
+  if (!firstRender && fresh.some((m) => !m.mine)) chime('notify');
+  chatMsgs.push(...fresh);
+  if (fresh.length) chatSeq = fresh[fresh.length - 1].seq;
+  const log = $('chat-log');
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  log.innerHTML = chatMsgs.length
+    ? chatMsgs.map((m) => `
+      <div class="chat-msg${m.mine ? ' mine' : ''}">
+        <span class="t">${new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <strong>${esc(m.name)}</strong> ${esc(m.text)}
+      </div>`).join('')
+    : `<div class="muted small">${t('chat.empty')}</div>`;
+  if (atBottom || fresh.some((m) => m.mine)) log.scrollTop = log.scrollHeight;
+}
+
+let chatSending = false;
+async function sendChat() {
+  const text = $('chat-input').value.trim();
+  if (!text || chatSending) return;
+  chatSending = true;
+  $('chat-send').disabled = true;
+  try {
+    await api('/api/chat', { code, playerId: session.playerId, token: session.token, text });
+    $('chat-input').value = '';
+    $('chat-error').textContent = '';
+    await poll();
+  } catch (e) {
+    $('chat-error').textContent = e.message;
+  } finally {
+    chatSending = false;
+    $('chat-send').disabled = false;
+  }
+}
+$('chat-send').addEventListener('click', sendChat);
+$('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
 
 // Effect triggers: everything compares against the previous poll so chimes
 // and confetti fire exactly once per event; the first render is silent so a
@@ -142,6 +199,7 @@ function renderSoloResult(s) {
 
 function render(s) {
   timer.update(s);
+  renderChat(s);
   setBackground(s.adventure.slug);
   $('adventure-title').textContent = advText(s.adventure, 'title');
   $('team-name').textContent = s.solo ? s.you.name : s.you.teamName;
@@ -282,7 +340,8 @@ async function poll() {
     // LANG is a global from i18n.js. The server renders puzzle text in it;
     // scoring is unaffected, so switching mid-run is safe.
     let url = `/api/state?code=${code}&playerId=${session.playerId}`
-      + `&token=${encodeURIComponent(session.token)}&lang=${LANG}`;
+      + `&token=${encodeURIComponent(session.token)}&lang=${LANG}`
+      + `&away=${document.hidden ? 1 : 0}&chatAfter=${chatSeq}`;
     const reporting = Math.round(awayMs);
     if (reporting > sentAwayMs) url += `&awayMs=${reporting}`;
     const s = await api(url);

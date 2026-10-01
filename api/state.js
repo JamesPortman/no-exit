@@ -3,11 +3,17 @@
 const { getStore } = require('./_lib/store.js');
 const {
   loadGame, loadTeam, maybeExpire, elapsedMs, rankTeams, adventureFor,
-  playersKey, logKey, sendJSON, TTL_SEC,
+  playersKey, logKey, chatKey, appendLog, sendJSON, TTL_SEC,
 } = require('./_lib/games.js');
 const { playerView, localizeAdventure, langOf } = require('./_lib/content.js');
 const { recordResultsOnce } = require('./_lib/db.js');
 const { safeEqual, playerFor } = require('./_lib/auth.js');
+
+const HOST_CHAT_TAIL = 50;
+const PLAYER_CHAT_TAIL = 100;
+
+// A chat message as clients see it: the sender's player id stays server-side.
+const publicMsg = (m) => ({ seq: m.seq, at: m.at, name: m.name, text: m.text });
 
 module.exports = async (req, res) => {
   const code = String(req.query.code || '').toUpperCase();
@@ -23,23 +29,48 @@ module.exports = async (req, res) => {
   const isPlayer = !!player;
   if (!isHost && !isPlayer) return sendJSON(res, 403, { error: 'not in this game' });
 
+  meta = await maybeExpire(meta);
+  const now = Date.now();
+
   // Off-tab telemetry (TI-style): the player's poll reports cumulative time
-  // spent away from the tab; clamp it and only ever let it grow.
-  if (isPlayer && req.query.awayMs !== undefined) {
-    const n = Math.min(3600000, Math.max(0, Math.round(Number(req.query.awayMs) || 0)));
-    if (n > (player.awayMs || 0)) {
-      player.awayMs = n;
+  // spent away from the tab; clamp it and only ever let it grow. It also
+  // reports whether the tab is hidden RIGHT NOW (`away=1|0`) — the client
+  // polls the instant visibility flips — so the host sees who is gone while
+  // they are gone, not only once they come back.
+  if (isPlayer) {
+    let dirty = false;
+    if (req.query.awayMs !== undefined) {
+      const n = Math.min(3600000, Math.max(0, Math.round(Number(req.query.awayMs) || 0)));
+      if (n > (player.awayMs || 0)) {
+        player.awayMs = n;
+        dirty = true;
+      }
+    }
+    if (req.query.away === '1' || req.query.away === '0') {
+      const away = req.query.away === '1';
+      if (away && !player.awaySince) {
+        player.awaySince = now;
+        dirty = true;
+      } else if (!away && player.awaySince) {
+        const goneMs = now - player.awaySince;
+        player.awaySince = null;
+        dirty = true;
+        // A refresh flips hidden→visible in a blink; only log real absences.
+        if (meta.state === 'running' && goneMs >= 3000) {
+          await appendLog(code, { type: 'back', teamId: player.teamId, name: player.name, goneMs });
+        }
+      }
+    }
+    if (dirty) {
       await store.hsetJSON(playersKey(code), playerId, player, TTL_SEC);
       players[playerId] = player;
     }
   }
 
-  meta = await maybeExpire(meta);
   await recordResultsOnce(meta); // no-op unless just finished and unrecorded
   // Puzzle text is localized at read time; answers are language-independent
   // (see content.js), so nothing about scoring depends on this.
   const adventure = localizeAdventure(adventureFor(meta), langOf(req));
-  const now = Date.now();
   const elapsed = elapsedMs(meta, now);
 
   const teamStates = {};
@@ -84,6 +115,10 @@ module.exports = async (req, res) => {
 
   if (isHost) {
     const log = (await store.getJSON(logKey(code))) || [];
+    const chats = {};
+    for (const t of meta.teams) {
+      chats[t.id] = (await store.listJSON(chatKey(code, t.id))).slice(-HOST_CHAT_TAIL);
+    }
     out.host = {
       joinUrl: `./?join=${code}`, // relative: resolve against the app's root page
       log: log.slice(-60),
@@ -97,7 +132,14 @@ module.exports = async (req, res) => {
           name: t.name,
           players: Object.entries(players)
             .filter(([, p]) => p.teamId === t.id)
-            .map(([pid, p]) => ({ id: pid, name: p.name, awayMs: p.awayMs || 0 })),
+            .map(([pid, p]) => ({
+              id: pid,
+              name: p.name,
+              awayMs: p.awayMs || 0,
+              // Live: how long they have been off the tab right now, or null.
+              awayForMs: p.awaySince && meta.state !== 'finished'
+                ? Math.max(0, now - p.awaySince) : null,
+            })),
           puzzleIdx: s.puzzleIdx,
           totalPuzzles: adventure.puzzles.length,
           currentPuzzle: current ? { id: current.id, title: current.title } : null,
@@ -110,6 +152,7 @@ module.exports = async (req, res) => {
           hintsTaken: s.hintsTaken,
           penaltyMs: s.penaltyMs,
           finishedAtMs: s.finishedAtMs,
+          chat: chats[t.id].map(publicMsg),
         };
       }),
     };
@@ -142,6 +185,15 @@ module.exports = async (req, res) => {
       wrongCount: teamState.wrongCount,
       finishedAtMs: teamState.finishedAtMs,
     };
+    // Team chat, incrementally: the client sends the last seq it holds and
+    // gets only what is newer. Solo runs have no team to talk to.
+    if (meta.mode !== 'solo') {
+      const after = Math.max(0, Number(req.query.chatAfter) || 0);
+      out.chat = (await store.listJSON(chatKey(code, player.teamId)))
+        .filter((m) => m.seq > after)
+        .slice(-PLAYER_CHAT_TAIL)
+        .map((m) => ({ ...publicMsg(m), mine: m.pid === playerId }));
+    }
   }
 
   sendJSON(res, 200, out);

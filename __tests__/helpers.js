@@ -8,6 +8,7 @@ const hint = require('../api/hint.js');
 const host = require('../api/host.js');
 const solo = require('../api/solo.js');
 const lookup = require('../api/lookup.js');
+const chat = require('../api/chat.js');
 
 function mockRes() {
   const r = { statusCode: null, body: null };
@@ -54,6 +55,6 @@ async function soloRun(body = {}) {
 }
 
 module.exports = {
-  create, join, state, answer, hint, host, solo, lookup, soloRun,
+  create, join, state, answer, hint, host, solo, lookup, chat, soloRun,
   call, get, mockRes, startedGame, playerState, hostState,
 };

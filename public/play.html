@@ -77,6 +77,19 @@
       </div>
     </div>
 
+    <!-- Team chat: shown for hosted games, in every phase -->
+    <div class="card chat hidden" id="chat-card">
+      <h3 style="margin-top:0" data-i18n="chat.title">💬 Team chat</h3>
+      <p class="muted small" data-i18n="chat.note">Only your teammates and the host can see these messages.</p>
+      <div class="chat-log" id="chat-log"></div>
+      <div class="answer-row" style="margin-top:8px">
+        <input type="text" id="chat-input" maxlength="300" autocomplete="off"
+               data-i18n-placeholder="chat.placeholder" placeholder="message your team…">
+        <button class="secondary" id="chat-send" data-i18n="chat.send">Send</button>
+      </div>
+      <div class="error" id="chat-error"></div>
+    </div>
+
     <div class="error" id="fatal"></div>
   </div>
   <script src="js/api.js"></script>

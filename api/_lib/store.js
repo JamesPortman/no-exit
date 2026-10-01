@@ -38,6 +38,16 @@ function redisStore() {
       return n;
     },
     async del(...keys) { await redis.del(...keys); },
+    // Append to a list, keeping only the newest `cap` items. Atomic per call,
+    // so two writers racing never drop each other's entries.
+    async pushCapped(key, val, cap, ttlSec) {
+      await redis.rpush(key, val);
+      await redis.ltrim(key, -cap, -1);
+      if (ttlSec) await redis.expire(key, ttlSec);
+    },
+    async listJSON(key) {
+      return (await redis.lrange(key, 0, -1)) || [];
+    },
   };
 }
 
@@ -85,6 +95,12 @@ function fileStore() {
       const fs2 = require('fs');
       for (const k of keys) { try { fs2.unlinkSync(fileFor(k)); } catch {} }
     },
+    async pushCapped(key, val, cap) {
+      const list = read(key) || [];
+      list.push(val);
+      write(key, list.slice(-cap));
+    },
+    async listJSON(key) { return read(key) || []; },
   };
 }
 

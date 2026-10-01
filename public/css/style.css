@@ -241,3 +241,23 @@ button.small-btn { padding: 6px 12px; font-size: 0.85rem; margin: 4px 4px 0 0; }
   font-size: 2rem; font-weight: 700; letter-spacing: 0.35em;
   text-align: center; color: var(--accent); padding: 8px;
 }
+
+/* Team chat (player screen + host console) */
+.chat-log {
+  max-height: 220px; overflow-y: auto; font-size: 0.9rem;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px;
+}
+.chat-msg { padding: 3px 0; overflow-wrap: anywhere; }
+.chat-msg .t { color: var(--muted); margin-right: 6px; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.chat-msg.mine strong { color: var(--accent); }
+.host-team details.team-chat { margin-top: 8px; }
+.host-team details.team-chat summary { cursor: pointer; font-size: 0.9rem; color: var(--muted); }
+
+/* Host: player off the game tab right now */
+.away-now {
+  display: inline-block; margin-left: 4px; padding: 0 6px;
+  border-radius: 4px; background: var(--bad); color: #fff;
+  font-size: 0.75rem; font-weight: 600;
+}
+.log-entry.back { color: var(--bad); }
