@@ -272,6 +272,25 @@ describe('tab-leave penalty', () => {
   });
 });
 
+describe('history delete', () => {
+  it('needs the host key and a valid game, and is a no-op without a database', async () => {
+    const prev = process.env.ADMIN_TOKEN;
+    process.env.ADMIN_TOKEN = 'secret-key';
+    try {
+      const body = { action: 'delete', gameCode: 'CCQS', playedAt: '2026-10-01T14:52:00Z' };
+      expect((await call(historyHandler, { body: { ...body, adminToken: 'wrong' } })).statusCode).toBe(403);
+      expect((await call(historyHandler, { body: { ...body, adminToken: 'secret-key', gameCode: 'nope!' } })).statusCode).toBe(400);
+      expect((await call(historyHandler, { body: { ...body, adminToken: 'secret-key', playedAt: 'not a date' } })).statusCode).toBe(400);
+      const ok = await call(historyHandler, { body: { ...body, adminToken: 'secret-key' } });
+      expect(ok.statusCode).toBe(200);
+      expect(ok.body.deleted).toBe(0); // no DATABASE_URL in tests
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_TOKEN;
+      else process.env.ADMIN_TOKEN = prev;
+    }
+  });
+});
+
 describe('history endpoint', () => {
   it('honors ADMIN_TOKEN and degrades gracefully without a database', async () => {
     const prev = process.env.ADMIN_TOKEN;

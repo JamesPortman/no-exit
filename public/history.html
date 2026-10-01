@@ -52,7 +52,10 @@
         const first = rows[0];
         const when = new Date(first.played_at).toLocaleString();
         return `<div class="card">
-          <h3>${esc(first.adventure_slug)} <span class="muted small">— ${esc(first.game_code)}, ${esc(when)}</span></h3>
+          <h3 style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+            <span>${esc(first.adventure_slug)} <span class="muted small">— ${esc(first.game_code)}, ${esc(when)}</span></span>
+            <button class="secondary small-btn" data-delete="${esc(first.game_code)}" data-played="${esc(String(first.played_at))}" data-when="${esc(when)}">🗑 Delete</button>
+          </h3>
           ${rows.map((r) => {
             // Neon returns JSONB columns pre-parsed; older rows could be strings.
             const players = Array.isArray(r.players_json)
@@ -72,6 +75,20 @@
           }).join('')}
         </div>`;
       }).join('') || '<div class="card muted">No games recorded yet.</div>';
+      for (const btn of $('games').querySelectorAll('button[data-delete]')) {
+        btn.onclick = async () => {
+          const { delete: gameCode, played: playedAt, when: label } = btn.dataset;
+          if (!confirm(`Delete game ${gameCode} (${label}) from the history? This can't be undone.`)) return;
+          btn.disabled = true;
+          try {
+            await api('/api/history', { adminToken, action: 'delete', gameCode, playedAt });
+            await load();
+          } catch (err) {
+            $('error').textContent = err.message;
+            btn.disabled = false;
+          }
+        };
+      }
     } catch (e) {
       $('error').textContent = e.message;
     }
