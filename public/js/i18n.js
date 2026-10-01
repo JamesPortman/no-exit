@@ -89,6 +89,8 @@ const MESSAGES = {
     'team.default1': 'Red Herrings',
     'team.default2': 'Locked Legends',
     'team.default3': 'Cryptic Crew',
+    'team.default4': 'Night Owls',
+    'team.default5': 'Code Breakers',
   },
   es: {
     'join.title': 'Unirse a una partida',
@@ -171,6 +173,8 @@ const MESSAGES = {
     'team.default1': 'Pistas Falsas',
     'team.default2': 'Leyendas Bajo Llave',
     'team.default3': 'Mentes Enigmáticas',
+    'team.default4': 'Búhos Nocturnos',
+    'team.default5': 'Rompecódigos',
   },
   pt: {
     'join.title': 'Entrar em um jogo',
@@ -253,6 +257,8 @@ const MESSAGES = {
     'team.default1': 'Pistas Falsas',
     'team.default2': 'Lendas Trancadas',
     'team.default3': 'Turma do Enigma',
+    'team.default4': 'Corujas da Noite',
+    'team.default5': 'Quebra-Códigos',
   },
 };
 
