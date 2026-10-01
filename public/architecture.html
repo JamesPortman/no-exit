@@ -177,7 +177,7 @@
         </g>
         <g fill="#9aa3b2" font-size="11">
           <text x="250" y="62">GET</text>
-          <text x="235" y="150">/api/state·answer·hint·host</text>
+          <text x="225" y="150">/api/state·answer·hint·chat·host</text>
           <text x="560" y="120">every read/write</text>
           <text x="560" y="216">once, on finish</text>
         </g>
@@ -185,10 +185,11 @@
     </div>
     <ul class="notes">
       <li>Everything a player sees is a static file; all game logic lives in
-        ten functions: <code>config</code>, <code>lookup</code>,
+        eleven functions: <code>config</code>, <code>lookup</code>,
         <code>create</code>, <code>solo</code>, <code>join</code>,
         <code>state</code>, <code>answer</code>, <code>hint</code>,
-        <code>host</code>, <code>leaderboard</code> (+ <code>history</code>).</li>
+        <code>chat</code>, <code>host</code>, <code>leaderboard</code>
+        (+ <code>history</code>).</li>
       <li><code>solo</code> is the only ungated endpoint: it starts a
         single-player run with no host key, so it is deliberately a separate
         file rather than a branch inside the ADMIN-gated <code>create</code>.
@@ -198,6 +199,10 @@
         changes are minute-scale, so polling beats websocket complexity at
         this size — a lesson inherited directly from Terra Incognita's live
         rooms.</li>
+      <li>Team chat rides the same poll. <code>chat</code> only writes; each
+        player's poll returns their own team's messages newer than the last
+        sequence number they hold, and the host's poll returns every team's.
+        Other teams never see a team's chat.</li>
       <li>Locally, <code>dev-server.js</code> maps the same handlers onto
         <code>localhost:3400</code> and <code>store.js</code> falls back to a
         file store in the OS temp dir — the full game runs with zero cloud
@@ -269,7 +274,7 @@
       <tr><td>game:CODE:tabcharges</td><td>Hash of absences already charged the 1-minute tab penalty, one field per <code>playerId:awaySince</code>. A player off the tab more than 5 seconds while the clock runs costs their team a minute; whichever poll notices first writes the field with <code>hsetnx</code>, so racing polls never charge the same absence twice. Solo runs are exempt.</td></tr>
       <tr><td>game:CODE:log</td><td>Append-only event feed for the host (joins, solves, wrong guesses, hints, returns from off-tab absences, host actions), capped at 200 entries.</td></tr>
       <tr><td>game:CODE:chat:ID</td><td>Team chat: a Redis list of <code>{seq, at, name, text}</code> (plus the sender's id, never sent to clients), capped at 200 with <code>rpush</code>+<code>ltrim</code> so racing senders never drop each other. Players read their own team's list on the state poll, asking only for messages after the last <code>seq</code> they hold; the host reads every team's. <code>game:CODE:chatseq:ID</code> is the counter behind <code>seq</code>.</td></tr>
-      <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/solo/join/lookup/history/leaderboard, per-<em>team</em> (15/min) on answer attempts.</td></tr>
+      <tr><td>rl:*</td><td>Fixed-window rate-limit counters: per-IP on create/solo/join/lookup/history/leaderboard, per-<em>team</em> (15/min) on answer attempts, per-<em>player</em> (20/min) on chat messages.</td></tr>
     </table>
     <p style="font-size:0.9rem;color:var(--soft);margin-top:12px">
       All keys carry a 6-hour TTL — a finished game simply evaporates.
@@ -278,7 +283,9 @@
       finish, penalties, winner flag), written exactly once when a game
       reaches <code>finished</code>, guarded by a flag saved <em>before</em>
       the insert so a poll race can at worst drop the row, never duplicate
-      it. Test-fixture adventures are never recorded. <code>solo_scores</code>
+      it. Test-fixture adventures are never recorded. The host can delete a
+      game from the history page; the delete matches the game code
+      <em>and</em> the minute it was played, since codes are reused. <code>solo_scores</code>
       holds one row per completed solo run and is kept separate so public play
       cannot crowd out a host's actual events.
     </p>
@@ -366,11 +373,21 @@
         matter how many teammates click. Host-granted free hints reveal
         without penalty; host force-advance marks the puzzle solved with a
         visible “host assist” flag.</li>
-      <li>Off-tab telemetry (a Terra Incognita tradition): the client
-        accumulates hidden-tab time while the game runs and reports it with
-        its polls; the server clamps it and only lets it grow. It surfaces —
-        only when nonzero — per player on the host console and as a team
-        total on the final ranking. A deterrent, not a penalty.</li>
+      <li>Off-tab telemetry (a Terra Incognita tradition): every poll says
+        whether the player's tab is hidden right now, and a visibility change
+        polls at once. The host console flags who is away live (a badge per
+        player and a banner listing everyone) and logs each return with its
+        duration; a running total also shows on the final ranking.</li>
+      <li><strong>Tab penalty:</strong> a player off the game tab for more
+        than 5 seconds while the clock runs costs their team
+        <strong>1:00</strong>, once per absence, like a hint penalty. The
+        grace period forgives a page refresh. Whichever poll notices first —
+        the host's or any player's — charges it, so a hidden tab that has
+        stopped polling (or a team of one) is still charged; an
+        <code>hsetnx</code> on <code>tabcharges</code> makes a double charge
+        impossible. Paused clocks, escaped teams and solo runs are exempt.
+        Players see the rule on the join card, in the lobby and above every
+        puzzle, and the whole team gets an alert naming who left.</li>
     </ul>
   </section>
 
@@ -384,7 +401,8 @@
         <code>localStorage</code> for refresh survival. Every endpoint checks
         the caller's token against Redis, in constant time, and roster
         lookups only match the game's own player ids. <code>ADMIN_TOKEN</code>
-        (env) gates game creation, the history page and leaderboard removals,
+        (env) gates game creation, the history page (reading and deleting)
+        and leaderboard removals,
         and fails closed: unset, history and removals refuse everyone, and
         creation is open only off Vercel (local dev) — any deployment without
         it refuses to create games.</p>
@@ -392,7 +410,8 @@
       <div class="card">
         <div class="title">Rate limits</div>
         <p>Answer attempts: 15/minute <em>per team</em> in Redis — no
-        brute-forcing puzzles. Create/solo/join/lookup/history/leaderboard:
+        brute-forcing puzzles. Chat: 20 messages/minute per player.
+        Create/solo/join/lookup/history/leaderboard:
         fixed-window per-IP. Loopback traffic without a proxy header is exempt so local
         dev and E2E never throttle; real Vercel traffic always carries
         <code>x-forwarded-for</code>.</p>
@@ -471,14 +490,17 @@
       <div class="card">
         <div class="title">Every push</div>
         <ol>
-          <li>274 Vitest unit tests — engine, timing, sanitizer leak checks,
-            content schema + meta chains, i18n parity, host tools, admin
-            auth and content sealing — run
+          <li>290 Vitest unit tests — engine, timing, sanitizer leak checks,
+            content schema + meta chains, i18n parity, host tools, team chat,
+            off-tab status and tab penalties, team caps, admin auth and
+            content sealing — run
             against the file store (no cloud needed).</li>
           <li>Playwright drives a real multi-team game through the actual UI:
             host + two player browsers, wrong answer, hint, pause,
-            force-advance, ranking, refresh-resume. Further specs cover the
-            create form, the language toggle and a seeded solo run.</li>
+            force-advance, ranking, refresh-resume. Further specs cover team
+            chat privacy, live off-tab alerts and the tab penalty, a full team
+            on the join page, the create form, the language toggle and a
+            seeded solo run.</li>
         </ol>
       </div>
       <div class="card">
@@ -598,7 +620,7 @@
 │   ├── backgrounds/            # one hand-drawn SVG scene per adventure
 │   └── puzzles/&lt;slug&gt;/         # images referenced by puzzle prompts
 ├── api/
-│   ├── config · lookup · create · join · state · answer · hint · host · history
+│   ├── config · lookup · create · join · state · answer · hint · chat · host · history
 │   ├── solo.js                 # public, ungated: starts a generated run
 │   ├── leaderboard.js          # public read; host-key delete
 │   └── _lib/
@@ -615,8 +637,8 @@
 ├── content/solo/riddles.enc    # sealed riddle bank for generated runs
 ├── content/source/             # gitignored plaintext working copies
 ├── scripts/{seal,unseal}.js    # encrypt for commit / recover from ciphertext
-├── __tests__/                  # 274 Vitest specs (real handlers, file store)
-├── e2e/                        # Playwright: full game · create form · i18n · solo
+├── __tests__/                  # 290 Vitest specs (real handlers, file store)
+├── e2e/                        # Playwright: full game · chat & off-tab · full team · create form · i18n · solo
 ├── dev-server.js               # local static + api host on :3400
 ├── .github/workflows/ci.yml    # test gate → prebuilt production deploy
 └── LICENSE · NOTICE            # code MIT; adventures, riddles, artwork © all rights reserved</pre>
