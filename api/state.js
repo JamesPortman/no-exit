@@ -3,7 +3,8 @@
 const { getStore } = require('./_lib/store.js');
 const {
   loadGame, loadTeam, maybeExpire, elapsedMs, rankTeams, adventureFor,
-  playersKey, logKey, chatKey, appendLog, sendJSON, TTL_SEC,
+  playersKey, logKey, chatKey, tabChargeKey, appendLog, saveTeam, sendJSON, TTL_SEC,
+  TAB_PENALTY_MS, TAB_GRACE_MS,
 } = require('./_lib/games.js');
 const { playerView, localizeAdventure, langOf } = require('./_lib/content.js');
 const { recordResultsOnce } = require('./_lib/db.js');
@@ -76,6 +77,30 @@ module.exports = async (req, res) => {
   const teamStates = {};
   for (const t of meta.teams) teamStates[t.id] = await loadTeam(code, t.id);
 
+  // Tab penalty: anyone off the tab past the grace period costs their team a
+  // minute, once per absence. Charged by whichever poll sees it first — the
+  // host's or a teammate's — so a player whose hidden tab has stopped polling
+  // is still charged. Solo runs are exempt: nobody else is affected.
+  if (meta.state === 'running' && meta.mode !== 'solo') {
+    const due = Object.entries(players).filter(([, p]) =>
+      p.awaySince && now - p.awaySince >= TAB_GRACE_MS);
+    if (due.length) {
+      const charged = await store.hgetallJSON(tabChargeKey(code));
+      for (const [pid, p] of due) {
+        const team = teamStates[p.teamId];
+        const field = `${pid}:${p.awaySince}`;
+        if (!team || team.finishedAtMs != null || Object.hasOwn(charged, field)) continue;
+        if (!(await store.hsetnxJSON(tabChargeKey(code), field, 1, TTL_SEC))) continue;
+        team.penaltyMs += TAB_PENALTY_MS;
+        team.tabPenalties = [...(team.tabPenalties || []), { name: p.name, atMs: elapsed }];
+        await saveTeam(code, p.teamId, team);
+        await appendLog(code, {
+          type: 'tabpenalty', teamId: p.teamId, name: p.name, penaltySec: TAB_PENALTY_MS / 1000,
+        });
+      }
+    }
+  }
+
   const roster = meta.teams.map((t) => ({
     id: t.id,
     name: t.name,
@@ -97,6 +122,7 @@ module.exports = async (req, res) => {
     remainingMs: Math.max(0, meta.durationMs - elapsed),
     serverNow: now,
     solo: meta.mode === 'solo',
+    tabPenaltySec: meta.mode === 'solo' ? 0 : TAB_PENALTY_MS / 1000,
     broadcast: meta.broadcast,
     teams: roster,
   };
@@ -151,6 +177,7 @@ module.exports = async (req, res) => {
             .map((e) => e.guess),
           hintsTaken: s.hintsTaken,
           penaltyMs: s.penaltyMs,
+          tabPenaltyCount: (s.tabPenalties || []).length,
           finishedAtMs: s.finishedAtMs,
           chat: chats[t.id].map(publicMsg),
         };
@@ -183,6 +210,7 @@ module.exports = async (req, res) => {
       ...playerView(adventure, teamState),
       penaltyMs: teamState.penaltyMs,
       wrongCount: teamState.wrongCount,
+      tabPenalties: teamState.tabPenalties || [],
       finishedAtMs: teamState.finishedAtMs,
     };
     // Team chat, incrementally: the client sends the last seq it holds and

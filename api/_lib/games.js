@@ -10,6 +10,10 @@ const MAX_TEAMS = 5;
 const TTL_SEC = 6 * 3600;
 const LOG_CAP = 200;
 const CHAT_CAP = 200;
+// Leaving the game tab mid-game costs the team a minute, like a hint does.
+// The grace period keeps a page refresh (hidden for a blink) from counting.
+const TAB_PENALTY_MS = 60 * 1000;
+const TAB_GRACE_MS = 5 * 1000;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 const metaKey = (code) => `game:${code}`;
@@ -18,6 +22,9 @@ const teamKey = (code, teamId) => `game:${code}:team:${teamId}`;
 const logKey = (code) => `game:${code}:log`;
 const chatKey = (code, teamId) => `game:${code}:chat:${teamId}`;
 const chatSeqKey = (code, teamId) => `game:${code}:chatseq:${teamId}`;
+// One field per absence (playerId:awaySince), written with hsetnx, so racing
+// polls can never charge the same absence twice.
+const tabChargeKey = (code) => `game:${code}:tabcharges`;
 
 function newCode() {
   let c = '';
@@ -41,6 +48,7 @@ function newTeamState() {
     hintsTaken: {},      // puzzleId -> number of hints revealed
     penaltyMs: 0,
     wrongCount: 0,
+    tabPenalties: [],    // [{ name, atMs }] one per tab departure charged
     finishedAtMs: null,  // elapsed + penalty when last puzzle solved
   };
 }
@@ -178,8 +186,8 @@ async function requirePlayer(req, res) {
 }
 
 module.exports = {
-  MAX_PLAYERS, MAX_TEAMS, TTL_SEC, CHAT_CAP,
-  metaKey, playersKey, teamKey, logKey, chatKey, chatSeqKey,
+  MAX_PLAYERS, MAX_TEAMS, TTL_SEC, CHAT_CAP, TAB_PENALTY_MS, TAB_GRACE_MS,
+  metaKey, playersKey, teamKey, logKey, chatKey, chatSeqKey, tabChargeKey,
   newCode, loadGame, saveGame, newTeamState, loadTeam, saveTeam,
   elapsedMs, maybeExpire, appendLog,
   normalizeAnswer, checkAnswer, rankTeams, adventureFor,

@@ -147,6 +147,12 @@ test('teammates chat privately; the host sees who has left the tab', async ({ br
   await setHidden(bob, true);
   await expect(hostPage.locator('#away-banner')).toContainText('Bob', { timeout: 10_000 });
   await expect(hostPage.locator('#teams .away-now')).toHaveCount(1);
+  // Past the 5-second grace, Blue is charged a minute; Bob sees why on return.
+  await expect(hostPage.locator('#log')).toContainText('Bob (Blue) left the game tab', { timeout: 15_000 });
   await setHidden(bob, false);
   await expect(hostPage.locator('#away-banner')).toBeHidden({ timeout: 10_000 });
+  await expect(bob.locator('#tab-warning')).toContainText('Bob left the game tab', { timeout: 10_000 });
+  await expect(bob.locator('#penalty')).toContainText('1:00');
+  // The rule is on screen for everyone in the game.
+  await expect(carol.locator('#view-play .tab-rule')).toBeVisible();
 });

@@ -70,6 +70,7 @@ function renderTeams(s) {
         <div class="stat"><span>Time on it</span><span>${fmtMs(t.msOnCurrentPuzzle)}</span></div>` : ''}
       <div class="stat"><span>Wrong guesses</span><span>${t.wrongCount}${t.lastWrongGuesses.length ? ` <span class="muted">(${t.lastWrongGuesses.map(esc).join(' · ')})</span>` : ''}</span></div>
       <div class="stat"><span>Hints used</span><span>${hintCount}</span></div>
+      <div class="stat"><span>Tab penalties</span><span>${t.tabPenaltyCount || '—'}</span></div>
       <div class="stat"><span>Penalty</span><span>${t.penaltyMs ? '+' + fmtMs(t.penaltyMs) : '—'}</span></div>
       <details class="team-chat" data-chat="${t.id}"${openChats.has(t.id) ? ' open' : ''}>
         <summary>💬 Team chat (${t.chat.length})</summary>
@@ -138,6 +139,7 @@ function renderLog(log) {
       case 'hint': return `<span class="t">${t}</span>💡 ${esc(team)} took hint ${e.hintIdx + 1} (+${e.penaltySec}s)`;
       case 'freehint': return `<span class="t">${t}</span>🎁 free hint to ${esc(team)}`;
       case 'advance': return `<span class="t">${t}</span>⏭ ${esc(team)} force-advanced past “${esc(e.puzzleTitle)}”`;
+      case 'tabpenalty': return `<span class="t">${t}</span>🚫 ${esc(e.name)} (${esc(team)}) left the game tab: +${fmtMs(e.penaltySec * 1000)} penalty`;
       case 'back': return `<span class="t">${t}</span>👀 ${esc(e.name)} (${esc(team)}) was off the game tab for ${fmtMs(e.goneMs)}`;
       case 'host': return `<span class="t">${t}</span>🎛 host: ${esc(e.action)}${e.msg ? ` — “${esc(e.msg)}”` : ''}`;
       default: return `<span class="t">${t}</span>${esc(e.type)}`;

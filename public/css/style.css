@@ -261,3 +261,7 @@ button.small-btn { padding: 6px 12px; font-size: 0.85rem; margin: 4px 4px 0 0; }
   font-size: 0.75rem; font-weight: 600;
 }
 .log-entry.back { color: var(--bad); }
+
+/* The stay-on-this-tab rule, shown on the join card, lobby and play view */
+.tab-rule { color: var(--bad); font-weight: 600; }
+.log-entry.tabpenalty { color: var(--bad); }
