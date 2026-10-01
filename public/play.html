@@ -26,6 +26,7 @@
 
     <div class="banner hidden" id="broadcast"></div>
     <div class="banner warning hidden" id="time-warning"></div>
+    <div class="banner warning hidden" id="tab-warning"></div>
 
     <!-- Lobby -->
     <div id="view-lobby" class="hidden">
@@ -33,6 +34,7 @@
         <h2 id="lobby-title"></h2>
         <p id="lobby-intro" class="muted"></p>
         <p data-i18n="play.waiting">Waiting for your host to start the game…</p>
+        <p class="tab-rule" data-i18n="rules.tab">🚫 Stay on this tab. Leaving it during the game adds a 1-minute penalty to your team's time.</p>
         <div class="team-list" id="lobby-roster"></div>
       </div>
     </div>
@@ -48,6 +50,7 @@
     <!-- Running -->
     <div id="view-play" class="hidden">
       <div class="dots" id="dots"></div>
+      <p class="tab-rule small" data-i18n="rules.tab">🚫 Stay on this tab. Leaving it during the game adds a 1-minute penalty to your team's time.</p>
       <div class="card" id="puzzle-card">
         <h2 id="puzzle-title"></h2>
         <div class="puzzle-prompt" id="puzzle-prompt"></div>

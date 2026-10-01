@@ -111,6 +111,8 @@ let lastSolvedCount = 0;
 let lastBroadcastAt = 0;
 let teamCelebrated = false;
 let gameOverCelebrated = false;
+let tabPenaltiesSeen = null;
+let tabWarningTimeout = null;
 const warned = {};
 let warningTimeout = null;
 
@@ -203,6 +205,7 @@ function render(s) {
   setBackground(s.adventure.slug);
   $('adventure-title').textContent = advText(s.adventure, 'title');
   $('team-name').textContent = s.solo ? s.you.name : s.you.teamName;
+  for (const el of document.querySelectorAll('.tab-rule')) el.classList.toggle('hidden', !s.tabPenaltySec);
 
   // Nobody is hosting a solo run, so the broadcast banner is dead chrome.
   const b = s.solo ? null : s.broadcast;
@@ -253,6 +256,17 @@ function render(s) {
       confetti();
     }
   }
+  // A teammate (or you) left the tab and the team was charged: say who, loudly.
+  const tabPens = team.tabPenalties || [];
+  if (tabPenaltiesSeen != null && tabPens.length > tabPenaltiesSeen) {
+    const names = [...new Set(tabPens.slice(tabPenaltiesSeen).map((x) => x.name))].map(esc).join(', ');
+    $('tab-warning').innerHTML = t('play.tabPenalty', names);
+    $('tab-warning').classList.remove('hidden');
+    chime('warn');
+    clearTimeout(tabWarningTimeout);
+    tabWarningTimeout = setTimeout(() => $('tab-warning').classList.add('hidden'), 15_000);
+  }
+  tabPenaltiesSeen = tabPens.length;
   $('penalty').classList.toggle('hidden', !team.penaltyMs);
   $('penalty').textContent = t('play.penalty', fmtMs(team.penaltyMs));
 

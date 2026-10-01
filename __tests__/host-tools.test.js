@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 const historyHandler = require('../api/history.js');
 const {
-  host, call, get, state, startedGame, playerState, hostState,
+  host, call, get, state, startedGame, playerState, hostState, soloRun,
 } = require('./helpers.js');
 
 describe('kick player', () => {
@@ -198,6 +198,77 @@ describe('live off-tab status', () => {
     await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
     await call(host, { body: { code, hostToken, action: 'end' } });
     expect(alice(await hostState(code, hostToken)).awayForMs).toBeNull();
+  });
+});
+
+describe('tab-leave penalty', () => {
+  const { getStore } = require('../api/_lib/store.js');
+  const { playersKey } = require('../api/_lib/games.js');
+  // Pretend the player left `ms` ago (stands in for waiting out the grace).
+  async function backdateAway(code, p, ms) {
+    const rec = (await getStore().hgetallJSON(playersKey(code)))[p.playerId];
+    rec.awaySince = Date.now() - ms;
+    await getStore().hsetJSON(playersKey(code), p.playerId, rec);
+  }
+  const redOf = (h, teams) => h.body.host.teams.find((t) => t.id === teams[0].id);
+
+  it('charges the team one minute per absence, once, whoever polls', async () => {
+    const { code, hostToken, teams, p1, p2 } = await startedGame();
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await backdateAway(code, p1, 6000);
+
+    // Alice's hidden tab is silent; the host's and Bob's polls charge her team.
+    await hostState(code, hostToken);
+    await playerState(code, p2);
+    const h = await hostState(code, hostToken);
+    expect(redOf(h, teams).penaltyMs).toBe(60_000);
+    expect(redOf(h, teams).tabPenaltyCount).toBe(1);
+    expect(h.body.host.log.filter((e) => e.type === 'tabpenalty')).toHaveLength(1);
+    // Blue is untouched.
+    expect(h.body.host.teams.find((t) => t.id === teams[1].id).penaltyMs).toBe(0);
+
+    // Alice sees who cost the team, and it counts in the ranking.
+    const a = await get(state, { code, playerId: p1.playerId, token: p1.token, away: '0' });
+    expect(a.body.team.penaltyMs).toBe(60_000);
+    expect(a.body.team.tabPenalties.map((x) => x.name)).toEqual(['Alice']);
+    expect(a.body.tabPenaltySec).toBe(60);
+
+    // A second, separate absence is a second minute.
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await backdateAway(code, p1, 6000);
+    await hostState(code, hostToken);
+    expect(redOf(await hostState(code, hostToken), teams).penaltyMs).toBe(120_000);
+  });
+
+  it('forgives a blink under the grace period (a refresh)', async () => {
+    const { code, hostToken, teams, p1 } = await startedGame();
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await hostState(code, hostToken);
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '0' });
+    expect(redOf(await hostState(code, hostToken), teams).penaltyMs).toBe(0);
+  });
+
+  it('only charges while the clock runs, and never a team that already escaped', async () => {
+    const { code, hostToken, teams, p1 } = await startedGame();
+    await call(host, { body: { code, hostToken, action: 'pause' } });
+    await get(state, { code, playerId: p1.playerId, token: p1.token, away: '1' });
+    await backdateAway(code, p1, 6000);
+    expect(redOf(await hostState(code, hostToken), teams).penaltyMs).toBe(0);
+
+    await call(host, { body: { code, hostToken, action: 'resume' } });
+    await call(host, { body: { code, hostToken, action: 'advance', teamId: teams[0].id } });
+    await call(host, { body: { code, hostToken, action: 'advance', teamId: teams[0].id } });
+    expect(redOf(await hostState(code, hostToken), teams).penaltyMs).toBe(0);
+  });
+
+  it('does not apply to solo runs', async () => {
+    const run = await soloRun({ name: 'Solo' });
+    const creds = { code: run.code, playerId: run.playerId, token: run.token };
+    await get(state, { ...creds, away: '1' });
+    await backdateAway(run.code, run, 6000);
+    const s = await get(state, creds);
+    expect(s.body.team.penaltyMs).toBe(0);
+    expect(s.body.tabPenaltySec).toBe(0);
   });
 });
 
