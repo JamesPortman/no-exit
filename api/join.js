@@ -2,7 +2,7 @@
 const crypto = require('crypto');
 const { getStore } = require('./_lib/store.js');
 const {
-  MAX_PLAYERS, TTL_SEC, loadGame, playersKey, appendLog, sendJSON,
+  MAX_PLAYERS, MAX_PER_TEAM, TTL_SEC, loadGame, playersKey, appendLog, sendJSON,
 } = require('./_lib/games.js');
 const { rateLimit } = require('./_lib/ratelimit.js');
 
@@ -31,11 +31,14 @@ module.exports = async (req, res) => {
   if (Object.keys(players).length >= MAX_PLAYERS) {
     return sendJSON(res, 400, { error: 'game is full' });
   }
+  if (Object.values(players).filter((p) => p.teamId === teamId).length >= MAX_PER_TEAM) {
+    return sendJSON(res, 400, { error: `that team is full (${MAX_PER_TEAM} players) — pick another` });
+  }
 
   const playerId = crypto.randomUUID();
   const player = { name, teamId, token: crypto.randomUUID(), joinedAt: Date.now() };
   // hsetnx guards the (vanishingly unlikely) UUID collision; joins racing the
-  // player-cap check may briefly overshoot MAX_PLAYERS, which is harmless.
+  // player-cap checks may briefly overshoot a cap by one, which is harmless.
   const ok = await store.hsetnxJSON(playersKey(code), playerId, player, TTL_SEC);
   if (!ok) return sendJSON(res, 500, { error: 'try again' });
 

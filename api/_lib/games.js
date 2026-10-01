@@ -5,7 +5,8 @@ const { getStore } = require('./store.js');
 const { getAdventure } = require('./content.js');
 const { playerFor } = require('./auth.js');
 
-const MAX_PLAYERS = 16;
+const MAX_PLAYERS = 25;
+const MAX_PER_TEAM = 5;
 const MAX_TEAMS = 5;
 const TTL_SEC = 6 * 3600;
 const LOG_CAP = 200;
@@ -186,7 +187,7 @@ async function requirePlayer(req, res) {
 }
 
 module.exports = {
-  MAX_PLAYERS, MAX_TEAMS, TTL_SEC, CHAT_CAP, TAB_PENALTY_MS, TAB_GRACE_MS,
+  MAX_PLAYERS, MAX_PER_TEAM, MAX_TEAMS, TTL_SEC, CHAT_CAP, TAB_PENALTY_MS, TAB_GRACE_MS,
   metaKey, playersKey, teamKey, logKey, chatKey, chatSeqKey, tabChargeKey,
   newCode, loadGame, saveGame, newTeamState, loadTeam, saveTeam,
   elapsedMs, maybeExpire, appendLog,
